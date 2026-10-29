@@ -1,0 +1,213 @@
+{
+ "fecha": "2026-10-27",
+ "proyectos": [
+  {
+   "id": "calendart",
+   "tipo": "aplicacion",
+   "nombre": "Calendart",
+   "area": "Gestión del estudio",
+   "resumen": "Vencimientos, clientes y reuniones del estudio en un solo lugar.",
+   "objetivo": "Seguir a mano los vencimientos de decenas de clientes es fácil de olvidar y difícil de repartir. Calendart arma el calendario de cada cliente y avisa con tiempo qué vence.",
+   "entradas": "Cartera de clientes, impuestos de cada uno, calendarios oficiales de vencimientos y reuniones.",
+   "funcionalidad": "Genera las obligaciones de cada mes con su vencimiento real, corridas por feriados y fines de semana. Marca un vencimiento operativo dos días hábiles antes, con semáforo. Sigue el estado de las DDJJ anuales con su checklist. Prepara recordatorios a clientes como borrador de correo, sin enviarlos solo. Avisa cuando dos reuniones se superponen.",
+   "salidas": "Tablero de vencimientos con semáforo, pendientes por persona, agenda y borradores de recordatorio.",
+   "tecnologias": [
+    "Next.js",
+    "TypeScript",
+    "React",
+    "Prisma",
+    "SQLite"
+   ],
+   "estado": "En uso",
+   "limitaciones": "Corre en una computadora local. El acceso para todo el equipo está en desarrollo.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir. Forma parte de mi trabajo diario.",
+   "publicacion": "publicado"
+  },
+  {
+   "id": "dfe-auto",
+   "tipo": "aplicacion",
+   "nombre": "DFE-AUTO",
+   "area": "Automatización fiscal",
+   "resumen": "Revisión ordenada del Domicilio Fiscal Electrónico de toda la cartera.",
+   "objetivo": "Revisar una por una las notificaciones de ARCA y ARBA de cada contribuyente lleva tiempo, y abrir una comunicación tiene efectos legales. DFE-AUTO revisa todo con un calendario fijo y reparte lo que llega a quien corresponde.",
+   "entradas": "Cartera de contribuyentes, responsables asignados y calendario de revisión por organismo.",
+   "funcionalidad": "Lee las comunicaciones todos los días sin abrirlas. Las abre solo los días fijados para cada organismo, porque abrir una notificación cuenta como notificado. Está pensado para ordenar las consultas por credencial y no por contribuyente, con muchos menos inicios de sesión. Cada usuario ve solo su cartera.",
+   "salidas": "Listado de comunicaciones con su documento, estado de atención y avisos para el responsable de cada cliente.",
+   "tecnologias": [
+    "Node.js",
+    "TypeScript",
+    "Fastify",
+    "Prisma",
+    "SQLite"
+   ],
+   "estado": "En implementación",
+   "limitaciones": "Funciona en una instalación local. Las claves fiscales nunca se guardan en la aplicación: quedan en un gestor de contraseñas aparte.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir.",
+   "publicacion": "publicado"
+  },
+  {
+   "id": "concivabot",
+   "tipo": "aplicacion",
+   "nombre": "ConcIVAbot",
+   "area": "Conciliación contable",
+   "resumen": "Cruza la contabilidad, ARCA y el papel de IVA para encontrar diferencias.",
+   "objetivo": "Antes de presentar el IVA hay que confirmar que lo contabilizado, lo que informa ARCA y lo que entra en la liquidación coincidan. Hacerlo a mano, comprobante por comprobante, es lento y se escapan diferencias.",
+   "entradas": "Mayores contables exportados del sistema de gestión, comprobantes y retenciones de ARCA, y el papel de IVA.",
+   "funcionalidad": "Lee cada fuente sin modificarla y la lleva a un formato común. Cruza por empresa, concepto e identidad del comprobante, y muestra coincidencias y diferencias con su archivo, hoja y fila de origen. Guarda los pendientes de un mes para el siguiente.",
+   "salidas": "Diferencias para revisar, coincidencias con trazabilidad e historial de pendientes por mes.",
+   "tecnologias": [
+    "JavaScript",
+    "Node.js",
+    "ExcelJS",
+    "SheetJS"
+   ],
+   "estado": "Piloto",
+   "limitaciones": "En prueba piloto. Es un control contable: no reemplaza la revisión de la liquidación.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir.",
+   "publicacion": "publicado"
+  },
+  {
+   "id": "sigespeed",
+   "tipo": "aplicacion",
+   "nombre": "SigeSpeed",
+   "area": "Productividad",
+   "resumen": "Arma el parte de horas del mes en minutos y controla que cierre.",
+   "objetivo": "Repartir las horas del mes entre proyectos para que la suma cierre exacta y se cumpla la meta de horas facturables es un rompecabezas mensual, y después hay que cargarlo línea por línea.",
+   "entradas": "Horas requeridas del mes, feriados, proyectos y actividades habituales.",
+   "funcionalidad": "Propone el reparto de horas en cuartos de hora, con el cierre exacto y la meta de cargabilidad del 80 %, redondeando siempre para el lado seguro. Muestra las opciones de ajuste y avisa si algo no cierra. Una extensión de Chrome ayuda a completar la grilla, y guardar sigue siendo una acción de la persona.",
+   "salidas": "Parte de horas listo para cargar, con controles de totales y cargabilidad.",
+   "tecnologias": [
+    "Next.js",
+    "TypeScript",
+    "React",
+    "Prisma",
+    "SQLite",
+    "Extensión de Chrome"
+   ],
+   "estado": "En uso",
+   "limitaciones": "Corre en una computadora local, para una persona.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir. Forma parte de mi trabajo diario.",
+   "publicacion": "publicado"
+  },
+  {
+   "id": "papelito",
+   "tipo": "aplicacion",
+   "nombre": "Papelito",
+   "area": "Liquidación anual",
+   "resumen": "Liquidador propio de Ganancias y Bienes Personales para personas humanas.",
+   "objetivo": "El papel anual en Excel es enorme, frágil y difícil de compartir entre dos personas. Papelito lleva la liquidación a un motor propio, con controles automáticos y datos cifrados.",
+   "entradas": "Papel del año anterior, información patrimonial, rentas financieras, la DDJJ presentada y las tablas de valuación de ARCA.",
+   "funcionalidad": "Calcula el impuesto de Ganancias (escala, quebrantos, deducciones) y el de Bienes Personales. Arma la justificación patrimonial. Controla el papel contra el ejercicio anterior y contra la DDJJ presentada. Cada importe sabe de dónde salió. Guarda la información cifrada y con respaldos verificados.",
+   "salidas": "Papel de trabajo completo, exportable a Excel y PDF para el legajo, con sus controles.",
+   "tecnologias": [
+    "Python",
+    "FastAPI",
+    "SQLite",
+    "HTML"
+   ],
+   "estado": "En prueba",
+   "limitaciones": "Validado contra declaraciones presentadas del período 2025. Sigue en desarrollo.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir.",
+   "publicacion": "publicado"
+  },
+  {
+   "id": "estandarizador-mayores",
+   "tipo": "aplicacion",
+   "nombre": "Estandarizador de mayores",
+   "area": "Preparación de papeles",
+   "resumen": "Convierte mayores de SAP, Odoo y otros sistemas en una sola tabla y controla que cada cuenta cuadre.",
+   "objetivo": "Cada sistema contable exporta el mayor con un formato distinto, y pasarlo al papel de trabajo a mano es lento y riesgoso. El estandarizador lo lleva a una tabla única y controla cada cuenta contra el total del propio mayor.",
+   "entradas": "Mayores exportados de SAP (en texto o en Excel), libros mayores de Odoo, listados con saldo y papeles de trabajo con mayores pegados.",
+   "funcionalidad": "Reconoce el formato por el contenido, no por la extensión del archivo. Identifica la cuenta de cada partida con las mismas reglas que usa el papel de Ganancias, arma una tabla con columnas fijas y controla cuenta por cuenta que lo leído cuadre al centavo con el total del mayor; si se pide, también contra el balance. Lee archivos muy grandes de a partes y borra todo al terminar.",
+   "salidas": "Mayor estandarizado en Excel y en CSV, listo para importar al papel, y un libro de controles con el cuadre de cada cuenta.",
+   "tecnologias": [
+    "Node.js",
+    "JavaScript",
+    "ExcelJS",
+    "SheetJS"
+   ],
+   "estado": "En prueba",
+   "limitaciones": "Probado con más de un millón y medio de partidas. Corre solo en la computadora local; la conexión directa con el papel de trabajo está en desarrollo.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir.",
+   "publicacion": "publicado"
+  },
+  {
+   "id": "ganancias-personas-juridicas",
+   "tipo": "papel-anual",
+   "nombre": "Ganancias anual · Personas Jurídicas",
+   "area": "Impuestos anuales",
+   "resumen": "Papel de trabajo del F.713 que importa, arma anexos y controla al centavo.",
+   "objetivo": "La DDJJ de Ganancias de una sociedad exige pasar el balance, los mayores y el año anterior a un papel de trabajo extenso. Un error de copiado puede pasar inadvertido hasta la revisión.",
+   "entradas": "Sumas y saldos del sistema contable, mayores, papel del año anterior, estados contables y tipos de cambio.",
+   "funcionalidad": "Importa sumas y saldos y solo escribe si todo cuadra al centavo: si algo no cierra, se detiene y avisa. Arma los anexos y los mayores de cada ajuste. Corrige fórmulas de la plantilla con registro de cada cambio. Lo que trae la herramienta queda en rojo y lo cargado a mano en amarillo.",
+   "salidas": "Papel del F.713 con anexos, controles y trazabilidad, listo para la revisión profesional.",
+   "tecnologias": [
+    "Excel",
+    "VBA",
+    "PowerShell"
+   ],
+   "estado": "En prueba",
+   "limitaciones": "Probado de punta a punta con ejercicios reales completos. Sigue incorporando mejoras.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir.",
+   "publicacion": "publicado"
+  },
+  {
+   "id": "ganancias-bp-personas-humanas",
+   "tipo": "papel-anual",
+   "nombre": "Ganancias y Bienes Personales · Personas Humanas",
+   "area": "Impuestos anuales",
+   "resumen": "Papel del F.711 y F.762 con anexos que se crean solos y checklist de revisión.",
+   "objetivo": "Cada cliente tiene bienes, cuentas y deudas distintos, y armar a mano los anexos patrimoniales del país y del exterior consume buena parte de la liquidación.",
+   "entradas": "Saldos iniciales del año anterior, renta financiera, comprobantes recibidos, pagos a cuenta y tipos de cambio.",
+   "funcionalidad": "Una cinta propia en Excel crea solo los anexos que el cliente necesita, enlaza sus saldos e importa la información del período. Protege las fórmulas y suma un checklist de revisión para el equipo.",
+   "salidas": "Papel anual de Ganancias y Bienes Personales con anexos enlazados, resumen y checklist.",
+   "tecnologias": [
+    "Excel",
+    "VBA"
+   ],
+   "estado": "En uso",
+   "limitaciones": "Trabaja sobre la plantilla del estudio. No la reemplaza.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir. Forma parte de mi trabajo diario.",
+   "publicacion": "publicado"
+  },
+  {
+   "id": "papeles-mensuales-personas-humanas",
+   "tipo": "papel-mensual",
+   "nombre": "Papeles mensuales · Personas Humanas",
+   "area": "Impuestos mensuales",
+   "resumen": "IVA, Ingresos Brutos por Convenio Multilateral y SICORE en papeles con importadores y controles.",
+   "objetivo": "Todos los meses se repite la misma carga de comprobantes, retenciones y percepciones para varios impuestos y clientes. Hecha a mano, es lenta y propensa a errores.",
+   "entradas": "Comprobantes emitidos y recibidos, retenciones y percepciones, pagos a cuenta y la DDJJ del mes anterior.",
+   "funcionalidad": "Importadores desde los portales de ARCA, controles que exigen que cada total coincida con el comprobante y apertura del período siguiente. En SICORE prepara la salida para importar, condicionada a los controles. Un checklist de revisión acompaña cada papel.",
+   "salidas": "Papeles mensuales de IVA, CM03 y SICORE con detalle, controles y checklist.",
+   "tecnologias": [
+    "Excel",
+    "VBA",
+    "Python"
+   ],
+   "estado": "En uso",
+   "limitaciones": "Percepciones y algunos impuestos que los portales no discriminan se siguen cargando a mano.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir. Forma parte de mi trabajo diario.",
+   "publicacion": "publicado"
+  },
+  {
+   "id": "papeles-mensuales-personas-juridicas",
+   "tipo": "papel-mensual",
+   "nombre": "Papeles mensuales · Personas Jurídicas",
+   "area": "Impuestos mensuales",
+   "resumen": "IVA, Convenio Multilateral y SICORE de sociedades, con conexión a la conciliación contable.",
+   "objetivo": "En las sociedades, cada papel mensual tiene que coincidir además con la contabilidad. Reunir y controlar esa información en varios impuestos lleva horas todos los meses.",
+   "entradas": "Comprobantes, información contable, coeficientes por jurisdicción, retenciones y percepciones.",
+   "funcionalidad": "Papeles de IVA, CM03 y SICORE con importación por perfiles y controles. El de IVA recibe los resultados de ConcIVAbot para dejar trazado cada ajuste contable. En SICORE, cada perfil de salida se valida antes de generar el archivo.",
+   "salidas": "Papeles mensuales de sociedades con distribución por jurisdicción, controles y trazabilidad contable.",
+   "tecnologias": [
+    "Excel",
+    "VBA"
+   ],
+   "estado": "En prueba",
+   "limitaciones": "Algunas mejoras siguen en validación antes de usarlas con todos los clientes.",
+   "participacion": "Definí el problema, las reglas impositivas y los controles que tenía que cumplir.",
+   "publicacion": "publicado"
+  }
+ ]
+}

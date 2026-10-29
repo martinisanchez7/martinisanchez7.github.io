@@ -1,0 +1,221 @@
+{
+ "aviso": "Caso de ejemplo con datos ficticios. Ilustra cómo trabaja la herramienta; no es la herramienta real ni usa información de clientes. Fechas e importes son ilustrativos.",
+ "ejemplos": {
+  "calendart": {
+   "cliente": "Ana Ejemplo",
+   "contexto": "Persona humana con IVA, asientos contables mensuales y facturación. Hoy es lunes 19/10/2026.",
+   "pasos": [
+    {"titulo": "Qué recibe", "tipo": "tabla", "columnas": ["Impuesto o tarea", "Período", "Regla de vencimiento"],
+     "filas": [
+      ["IVA", "09/2026", "Calendario oficial (ejemplo: martes 20/10)"],
+      ["Asientos contables", "10/2026", "Día 25 del mes, corrido a día hábil"],
+      ["Facturación", "10/2026", "Primer día hábil del mes siguiente"]
+     ]},
+    {"titulo": "Qué hace", "tipo": "lista", "items": [
+      "Calcula el vencimiento real: el 25/10 cae domingo y pasa al lunes 26/10; el 1/11 cae domingo y pasa al lunes 2/11.",
+      "Marca un vencimiento operativo dos días hábiles antes, para trabajar con margen.",
+      "Pinta el semáforo según los días hábiles que faltan hasta el operativo.",
+      "Arma el recordatorio al cliente como borrador de correo: nunca lo envía solo."
+    ]},
+    {"titulo": "Qué devuelve", "tipo": "tabla", "columnas": ["Impuesto o tarea", "Vencimiento", "Operativo", "Semáforo"],
+     "filas": [
+      ["IVA 09/2026", "mar 20/10", "vie 16/10", {"v": "Pasó el operativo", "m": "alerta"}],
+      ["Asientos 10/2026", "lun 26/10", "jue 22/10", {"v": "Faltan 3 días hábiles", "m": "manual"}],
+      ["Facturación 10/2026", "lun 02/11", "jue 29/10", {"v": "En plazo", "m": "ok"}]
+     ],
+     "nota": "El IVA pasó su vencimiento operativo, pero todavía está dentro del vencimiento real: el tablero lo muestra primero."}
+   ]
+  },
+  "dfe-auto": {
+   "cliente": "Ejemplo Servicios SRL",
+   "contexto": "Contribuyente con domicilio fiscal electrónico en ARCA y en ARBA. La revisión corre todos los días. Hoy es sábado 17/10/2026.",
+   "pasos": [
+    {"titulo": "Qué recibe", "tipo": "tabla", "columnas": ["Comunicación", "Organismo", "Llegó"],
+     "filas": [
+      ["Requerimiento de información", "ARCA", "mié 14/10"],
+      ["Aviso de vencimiento", "ARBA", "mié 14/10"],
+      ["Intimación de pago", "ARBA", "vie 16/10"]
+     ]},
+    {"titulo": "Qué hace", "tipo": "lista", "items": [
+      "Lee la bandeja todos los días sin abrir nada: abrir una comunicación cuenta como notificado.",
+      "Abre solo en los días fijados: ARCA los lunes y ARBA los martes y viernes, con todo lo que llegó hasta el día anterior.",
+      "Asigna cada comunicación al responsable de ese cliente: cada usuario ve solo su cartera."
+    ]},
+    {"titulo": "Qué devuelve", "tipo": "tabla", "columnas": ["Comunicación", "Organismo", "Se abre", "Responsable", "Estado"],
+     "filas": [
+      ["Requerimiento de información", "ARCA", "lun 19/10", "Responsable de la cartera A", {"v": "Leída, sin abrir", "m": "manual"}],
+      ["Aviso de vencimiento", "ARBA", "vie 16/10", "Responsable de la cartera A", {"v": "Abierta, con documento", "m": "ok"}],
+      ["Intimación de pago", "ARBA", "mar 20/10", "Responsable de la cartera A", {"v": "Leída, sin abrir", "m": "manual"}]
+     ]}
+   ]
+  },
+  "concivabot": {
+   "cliente": "Ejemplo Construcciones S.A.",
+   "contexto": "Conciliación del IVA de septiembre de 2026 antes de presentar.",
+   "pasos": [
+    {"titulo": "Qué recibe", "tipo": "tabla", "columnas": ["Comprobante", "Mayor contable", "ARCA", "Papel de IVA"],
+     "filas": [
+      ["Factura A 0001-00001234", "$ 100.000,00", "$ 100.000,00", "$ 100.000,00"],
+      ["Factura A 0003-00000567", "$ 50.000,00", "$ 50.000,00", "—"],
+      ["Nota de crédito 0001-00000045", "—", "$ -5.000,00", "$ -5.000,00"],
+      ["Retención de IVA", "$ 2.100,00", "$ 2.100,00", "$ 2.100,00"]
+     ]},
+    {"titulo": "Qué hace", "tipo": "lista", "items": [
+      "Lee cada fuente sin modificarla y la lleva a un formato común.",
+      "Cruza por empresa, concepto e identidad del comprobante.",
+      "Guarda de dónde salió cada dato (archivo, hoja y fila) para poder revisarlo."
+    ]},
+    {"titulo": "Qué devuelve", "tipo": "tabla", "columnas": ["Comprobante", "Resultado", "Qué revisar"],
+     "filas": [
+      ["Factura A 0001-00001234", {"v": "Coincide en las tres fuentes", "m": "ok"}, "—"],
+      ["Factura A 0003-00000567", {"v": "Falta en el papel de IVA", "m": "alerta"}, "Incorporarla a la liquidación"],
+      ["Nota de crédito 0001-00000045", {"v": "Falta contabilizar", "m": "alerta"}, "Pedir el asiento a contabilidad"],
+      ["Retención de IVA", {"v": "Coincide en las tres fuentes", "m": "ok"}, "—"]
+     ],
+     "nota": "Las diferencias que no se resuelven en el mes quedan como pendientes para el mes siguiente."}
+   ]
+  },
+  "sigespeed": {
+   "cliente": "Parte de horas de ejemplo",
+   "contexto": "Un mes con tres proyectos facturables y dos tareas internas. Probá cambiar las horas del mes.",
+   "pasos": [
+    {"titulo": "Qué recibe", "tipo": "tabla", "columnas": ["Proyecto", "Tipo", "Pedido"],
+     "filas": [
+      ["Cliente A · IVA y CM03", "Facturable", "Peso 3"],
+      ["Cliente B · DDJJ anual", "Facturable", "Peso 2"],
+      ["Cliente C · Consultas", "Facturable", "Peso 1"],
+      ["Capacitación", "No facturable", "8,00 h"],
+      ["Administración interna", "No facturable", "12,00 h"]
+     ]},
+    {"titulo": "Probalo: reparto del mes", "tipo": "interactivo", "widget": "reparto-horas",
+     "nota": "Las horas facturables tienen que llegar al 80 % y el total cerrar exacto, en cuartos de hora. El redondeo va siempre para el lado seguro."}
+   ]
+  },
+  "estandarizador-mayores": {
+   "cliente": "Ejemplo Construcciones S.A.",
+   "contexto": "Mayores del ejercicio 2025 exportados de dos sistemas distintos, para importarlos al papel de Ganancias.",
+   "pasos": [
+    {"titulo": "Qué recibe", "tipo": "tabla", "columnas": ["Archivo", "Sistema", "Qué detecta"],
+     "filas": [
+      ["mayor_caja.XLS", "SAP", "Es texto tabulado aunque diga .XLS; la cuenta viene arriba de cada bloque"],
+      ["libro_mayor.xlsx", "Odoo", "Bloques por cuenta; controla por saldo acumulado"],
+      ["papel_2024.xlsx", "Excel", "3 solapas que parecen mayor, entre 40; las demás quedan afuera"]
+     ]},
+    {"titulo": "Qué hace", "tipo": "lista", "items": [
+      "Reconoce el formato de cada archivo por su contenido y la cuenta de cada partida.",
+      "Arma una sola tabla con columnas fijas: fecha, cuenta, asiento, debe, haber, importe, texto y de qué archivo, hoja y fila salió.",
+      "Suma cada cuenta y la compara al centavo con el total que informa el propio mayor.",
+      "Avisa los archivos repetidos y las cuentas que no traen total para comparar."
+    ]},
+    {"titulo": "Qué devuelve: controles por cuenta", "tipo": "tabla", "columnas": ["Cuenta", "Partidas", "Total leído", "Total del mayor", "Control"],
+     "filas": [
+      ["1.1.01 Caja y bancos", "1.240", "$ 1.500.000,00", "$ 1.500.000,00", {"v": "Cuadra", "m": "ok"}],
+      ["2.1.01 Proveedores", "860", "$ -1.800.000,00", "$ -1.800.000,00", {"v": "Cuadra", "m": "ok"}],
+      ["5.2.03 Gastos bancarios", "112", "$ 45.300,00", "$ 45.350,00", {"v": "Diferencia $ -50,00", "m": "alerta"}],
+      ["4.1.01 Ventas", "300", "$ -9.000.000,00", "—", {"v": "Sin total para comparar", "m": "manual"}]
+     ],
+     "nota": "La tabla estándar sale en Excel y en CSV, lista para importar al papel. La diferencia de $ 50,00 se revisa antes de usarla."}
+   ]
+  },
+  "papelito": {
+   "cliente": "Ana Ejemplo",
+   "contexto": "Liquidación anual 2025 de una persona humana.",
+   "pasos": [
+    {"titulo": "Qué recibe", "tipo": "tabla", "columnas": ["Concepto", "Al 31/12/2024", "Al 31/12/2025"],
+     "filas": [
+      ["Inmueble (casa-habitación)", "$ 30.000.000,00", "$ 30.000.000,00"],
+      ["Cuenta bancaria en el país", "$ 2.000.000,00", "$ 3.500.000,00"],
+      ["Plazo fijo", "—", "$ 1.000.000,00"],
+      ["Total del patrimonio", "$ 32.000.000,00", "$ 34.500.000,00"]
+     ]},
+    {"titulo": "Qué hace", "tipo": "lista", "items": [
+      "Trae los saldos del año anterior y controla que coincidan con el papel presentado.",
+      "Calcula la variación del patrimonio y la compara con los ingresos del año.",
+      "Controla el resultado contra la DDJJ presentada: cada importe sabe de dónde salió."
+    ]},
+    {"titulo": "Qué devuelve: justificación patrimonial", "tipo": "tabla", "columnas": ["Concepto", "Importe", "Control"],
+     "filas": [
+      ["Variación del patrimonio", "$ 2.500.000,00", {"v": "Calculado", "m": "auto"}],
+      ["Ingresos netos del año", "$ 9.000.000,00", {"v": "Calculado", "m": "auto"}],
+      ["Consumo del año (ingresos − variación)", "$ 6.500.000,00", {"v": "Razonable", "m": "ok"}],
+      ["Diferencia contra la DDJJ presentada", "$ 0,00", {"v": "Coincide", "m": "ok"}]
+     ],
+     "nota": "Si el consumo diera negativo, el papel lo marca: el patrimonio creció más que los ingresos declarados."}
+   ]
+  },
+  "ganancias-personas-juridicas": {
+   "cliente": "Ejemplo Construcciones S.A.",
+   "contexto": "Importación del balance de sumas y saldos para el F.713. Probá cambiar un saldo.",
+   "pasos": [
+    {"titulo": "Qué hace", "tipo": "lista", "items": [
+      "Lee el balance de sumas y saldos tal como lo exporta el sistema contable.",
+      "Suma cada rubro y lo compara con los totales del reporte, al centavo.",
+      "Si algo no cierra, se detiene, avisa y no escribe nada. Si todo cuadra, importa: lo que trae queda en rojo."
+    ]},
+    {"titulo": "Probalo: ¿cuadra al centavo?", "tipo": "interactivo", "widget": "cuadre-sumas-saldos",
+     "nota": "Cambiá cualquier saldo y mirá cómo reacciona antes de escribir en el papel."}
+   ]
+  },
+  "ganancias-bp-personas-humanas": {
+   "cliente": "Ana Ejemplo",
+   "contexto": "Papel anual de Ganancias y Bienes Personales. Tildá los bienes que tiene la clienta.",
+   "pasos": [
+    {"titulo": "Qué hace", "tipo": "lista", "items": [
+      "Cada tipo de bien tiene su plantilla de anexo, con su forma de valuar.",
+      "Se crean solo los anexos de los bienes tildados, y sus saldos quedan enlazados a la situación patrimonial.",
+      "Un checklist acompaña la revisión del equipo."
+    ]},
+    {"titulo": "Probalo: crear anexos tildados", "tipo": "interactivo", "widget": "anexos-tildados"}
+   ]
+  },
+  "papeles-mensuales-personas-humanas": {
+   "cliente": "Ana Ejemplo",
+   "contexto": "Papel de IVA de septiembre de 2026.",
+   "pasos": [
+    {"titulo": "Qué recibe", "tipo": "tabla", "columnas": ["Comprobante", "Neto gravado", "IVA 21 %", "Exento / no gravado", "Total factura"],
+     "filas": [
+      ["Ventas del mes (emitidos)", "$ 1.000.000,00", "$ 210.000,00", "—", "$ 1.210.000,00"],
+      ["Compra 1 (recibido)", "$ 300.000,00", "$ 63.000,00", "$ 20.000,00", "$ 383.000,00"],
+      ["Compra 2 (recibido)", "$ 100.000,00", "$ 21.000,00", "—", {"v": "$ 122.000,00", "m": "alerta"}]
+     ]},
+    {"titulo": "Qué hace", "tipo": "lista", "items": [
+      "Importa los comprobantes emitidos y recibidos desde los portales de ARCA.",
+      "Separa exento y no gravado del neto, y exige que el total coincida con el comprobante: la compra 2 suma $ 121.000,00 y no $ 122.000,00, así que queda marcada.",
+      "Las percepciones que el portal no discrimina se cargan a mano, en amarillo."
+    ]},
+    {"titulo": "Qué devuelve", "tipo": "tabla", "columnas": ["Concepto", "Importe", "Origen"],
+     "filas": [
+      ["Débito fiscal", "$ 210.000,00", {"v": "Importado", "m": "auto"}],
+      ["Crédito fiscal", "$ 84.000,00", {"v": "Importado", "m": "auto"}],
+      ["Percepciones de IVA", "$ 5.000,00", {"v": "Carga manual", "m": "manual"}],
+      ["Saldo a pagar", "$ 121.000,00", {"v": "Calculado", "m": "auto"}],
+      ["Diferencia a revisar", "Compra 2: $ 1.000,00", {"v": "Antes de presentar", "m": "alerta"}]
+     ]}
+   ]
+  },
+  "papeles-mensuales-personas-juridicas": {
+   "cliente": "Ejemplo Construcciones S.A.",
+   "contexto": "Convenio Multilateral (CM03) de septiembre de 2026. Alícuotas ilustrativas.",
+   "pasos": [
+    {"titulo": "Qué recibe", "tipo": "tabla", "columnas": ["Dato", "Valor"],
+     "filas": [
+      ["Base imponible del mes", "$ 2.000.000,00"],
+      ["Coeficiente CABA", "0,6000"],
+      ["Coeficiente Buenos Aires", "0,4000"],
+      ["Retenciones y percepciones", "CABA $ 6.000,00 · Buenos Aires $ 4.000,00"]
+     ]},
+    {"titulo": "Qué hace", "tipo": "lista", "items": [
+      "Distribuye la base entre jurisdicciones según los coeficientes del año.",
+      "Aplica la alícuota de cada jurisdicción y descuenta lo retenido y percibido.",
+      "En el papel de IVA recibe los resultados de la conciliación contable, para que cada ajuste quede trazado."
+    ]},
+    {"titulo": "Qué devuelve", "tipo": "tabla", "columnas": ["Jurisdicción", "Base asignada", "Alícuota", "Impuesto", "A pagar"],
+     "filas": [
+      ["CABA", "$ 1.200.000,00", "3,00 %", "$ 36.000,00", {"v": "$ 30.000,00", "m": "auto"}],
+      ["Buenos Aires", "$ 800.000,00", "3,50 %", "$ 28.000,00", {"v": "$ 24.000,00", "m": "auto"}],
+      ["Total", "$ 2.000.000,00", "—", "$ 64.000,00", {"v": "$ 54.000,00", "m": "auto"}]
+     ]}
+   ]
+  }
+ }
+}
