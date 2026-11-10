@@ -33,7 +33,7 @@ test('refresh: endpoints fijos y resultados parciales cuando falla una fuente', 
   const targets = [];
   const result = await refresh(async (url, init) => {
     targets.push(url);
-    assert.equal(init.redirect, 'error');
+    assert.equal(init.redirect, 'manual');
     assert.ok(init.signal instanceof AbortSignal);
     if (url.includes('boletinoficial')) return new Response('Error', { status: 503 });
     return new Response(xml, { headers: { 'content-type': 'application/rss+xml; charset=UTF-8' } });
