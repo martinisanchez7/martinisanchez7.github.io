@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { fuentes } from './catalogo-fuentes.mjs';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const TIMEOUT_MS = 8_000;
@@ -33,7 +34,7 @@ function classify(title, summary) {
   const text = `${title} ${summary}`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
   if (/\b(?:normas? (?:profesionales )?contables?|normas? (?:internacionales? )?de informacion financiera|estados contables|estados financieros|auditoria contable|resolucion tecnica(?: n[o°.]?)? \d+)\b/.test(text)) return 'contable';
   if (/\b(?:agencia de recaudacion y control aduanero|administracion federal de ingresos publicos|monotributo|impuesto a las ganancias|impuesto al valor agregado|bienes personales|obligaciones tributarias|regimen de retencion|procedimiento tributario)\b/.test(text)) return 'impositivo';
-  if (/\b(?:convenios? colectivos? de trabajo|contrato de trabajo|acuerdos? salariales?|riesgos del trabajo|salario minimo|jornada laboral|relaciones laborales|negociacion colectiva|comision nacional de trabajo en casas particulares)\b/.test(text)) return 'laboral';
+  if (/\b(?:convenios? colectivos? de trabajo|contrato de trabajo|acuerdos? salariales?|riesgos del trabajo|salario minimo|jornada laboral|relaciones laborales|negociacion colectiva|comision nacional de trabajo en casas particulares|casas particulares|reforma laboral|despidos?|indemnizaciones?|paritarias|sueldos?|salarios?)\b/.test(text)) return 'laboral';
   return '';
 }
 
@@ -142,10 +143,39 @@ const sources = [
   { id: 'reserva-federal', url: `${FED}/feeds/press_all.xml`, accept: 'application/rss+xml, application/xml, text/xml', type: /^(?:text\/xml|application\/(?:rss\+xml|xml))\b/i, parse: parseFed },
 ];
 
+export function parseNews(xml, source) {
+  if (!/<rss\b/i.test(xml) || !/<channel\b/i.test(xml)) throw new Error('Formato RSS no reconocido');
+  const origin=new URL(source.url).hostname.replace(/^www\./,'');
+  const items=[];
+  let examined=0,recognized=0;
+  for(const [,entry] of blocks(xml, /<(\/?)item\b([^<>]{0,512})>/gi, 65_536)) {
+    if(++examined>80) break;
+    const title=plain(xmlField(entry,'title'),260);
+    const published=new Date(plain(xmlField(entry,'pubDate'),100));
+    let link;try{link=new URL(plain(xmlField(entry,'link'),1000));}catch{continue;}
+    if(!title||!Number.isFinite(published.valueOf())||link.protocol!=='https:'||link.username||link.password||link.port||link.hostname.replace(/^www\./,'')!==origin) continue;
+    recognized++;
+    // Se conserva sólo el titular y enlace. No se copia la nota ni se ejecuta su HTML.
+    let category=classify(title,'');
+    if(!category&&/impuestos|fiscal/.test(source.id)) category='impositivo';
+    if(!category&&source.id==='iprofesional-legales') continue;
+    if(!category) category=/\b(fed|estados unidos|wall street|china|bce|europa|paraguay)\b/i.test(title)?'internacional':'economia';
+    link.search='';link.hash='';
+    const id=createHash('sha256').update(link.href).digest('hex').slice(0,16);
+    const date=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Argentina/Buenos_Aires',year:'numeric',month:'2-digit',day:'2-digit'}).format(published);
+    items.push({id:`prensa-${id}`,title,summary:'Alerta periodística pendiente de cotejo con el documento original. Todavía no hay un resumen normativo verificado.',date,category,url:link.href,source:source.name,sourceId:source.id,mode:'automatico'});
+  }
+  if(/<item\b/i.test(xml)&&!recognized) throw new Error('Entradas RSS no reconocidas');
+  return unique(items);
+}
+
+for(const source of fuentes.filter(s=>s.feed)) sources.push({id:source.id,url:source.feed,accept:'application/rss+xml, application/xml, text/xml',type:/^(?:text\/xml|application\/(?:rss\+xml|xml))\b/i,parse:xml=>parseNews(xml,source)});
+export const sourceIds=sources.map(s=>s.id);
+
 export async function refresh(fetcher = fetch) {
   const result = await Promise.all(sources.map(async source => {
     try {
-      const items = source.parse(await download(fetcher, source));
+      const items = source.parse(await download(fetcher, source)).map(item=>({...item,sourceId:source.id}));
       return { items, status: { id: source.id, ok: true, count: items.length } };
     } catch (error) {
       const message = error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'Tiempo de espera agotado' : 'No se pudo leer o validar la fuente';

@@ -12,6 +12,7 @@ export async function actualizar(kv, now = Date.now(), update = refresh) {
   const previous = (await kv.get(snapshotKey,'json')) ?? empty();
   const lastAttempt = new Date(now).toISOString();
   const alreadyUpdated = previous.health.lastAttempt?.slice(0,10) === lastAttempt.slice(0,10)
+    && previous.health.coverageVersion === 2
     && previous.health.sources.length && previous.health.sources.every(source => source.ok);
   if(alreadyUpdated) return;
   let next;
@@ -19,7 +20,7 @@ export async function actualizar(kv, now = Date.now(), update = refresh) {
   catch { next = {items:[],status:[{id:'ingesta',ok:false,count:0}]}; }
   const items = mergeItems(previous.items,next.items);
   const sources = next.status.map(({id,ok,count}) => ({id,ok,count}));
-  const health = {...previous.health,lastAttempt,sources,cache:'guardada'};
+  const health = {...previous.health,lastAttempt,sources,cache:'guardada',coverageVersion:2};
   await kv.put(snapshotKey,JSON.stringify({health,items,lastCompleted:now}));
   console.log('Contanuevas:',updateStatus(health,now),sources.map(s=>[s.id,s.ok,s.count]));
 }

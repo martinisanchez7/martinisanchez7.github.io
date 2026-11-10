@@ -1,7 +1,7 @@
 const form=document.querySelector('#filtros'),list=document.querySelector('#entradas'),count=document.querySelector('#cantidad'),more=document.querySelector('#mas');
-const labels={impositivo:'Impositivo',contable:'Contable',laboral:'Laboral',internacional:'Mercados internacionales'};
+const labels={impositivo:'Impositivo',contable:'Contable',laboral:'Laboral',internacional:'Mercados internacionales',economia:'Economía y finanzas'};
 let controller,offset=0,applied=new URLSearchParams();
-const pageFilters=['q','categoria','modo','desde','hasta'];
+const pageFilters=['q','categoria','modo','desde','hasta','respaldo','importancia'];
 function restoreFilters(){
   const params=new URLSearchParams(location.search);
   for(const name of pageFilters) form.elements.namedItem(name).value=params.get(name)??'';
@@ -21,7 +21,10 @@ async function cargar(append=false){
     for(const item of data.items){
       const a=el('article','');const meta=el('div','','meta');
       meta.append(el('b',labels[item.category]),document.createTextNode(` · ${item.datePrecision==='month'?item.date.slice(0,7):item.date} · ${item.mode==='editorial'?'Ficha revisada':item.mode==='archivo'?'Archivo histórico':'Importación sin revisión editorial'}`));
-      a.append(meta,el('h3',item.title),el('p',item.summary),link(item.url,`${item.source} ↗`));for(const ref of item.references??[]) { const p=el("p","");p.append(link(ref.url,ref.label+" ↗"));a.append(p); } list.append(a);
+      a.append(meta,el('h3',item.title));
+      a.append(el('p',`${({oficial:'Fuente oficial',tecnico:'Referencia técnica',periodistico:'Prensa'})[item.sourceTier]??'Respaldo sin clasificar'} · ${item.importance==='alta'?'Prioridad alta':'Seguimiento'} · ${item.verification==='pendiente'?'Pendiente de cotejo documental':item.verification==='historica'?'Documento histórico':'Resumen revisado'}`,'respaldo'));
+      if(item.brief){for(const [key,label] of Object.entries({whatChanged:'Qué cambió',who:'A quién alcanza',when:'Desde cuándo',action:'Qué hacer',limits:'Qué revisar'})){if(item.brief[key]){const p=el('p','');p.append(el('strong',label+': '),document.createTextNode(item.brief[key]));a.append(p);}}a.append(el('p',`Revisión: ${item.brief.reviewedAt} · ${item.brief.scope}`));}else a.append(el('p',item.summary));
+      a.append(link(item.url,`${item.source} ↗`));for(const ref of item.references??[]) { const p=el("p","");p.append(link(ref.url,ref.label+" ↗"));a.append(p); } list.append(a);
     }
     offset+=data.items.length;count.textContent=`${data.total} ${data.total===1?'ficha':'fichas'}`;more.hidden=offset>=data.total;
     if(!data.total)list.append(el('p','No hay fichas con esos filtros. Probá otra sección o una búsqueda más corta.'));
@@ -44,6 +47,6 @@ fetch('/api/v1/salud').then(r=>r.json()).then(data=>{
   const warning={degradada:'Actualización incompleta',atrasada:'Actualización atrasada'}[data.actualizacion];
   document.querySelector('#salud').textContent=[warning,state,data.lastAttempt?`Último intento: ${new Date(data.lastAttempt).toLocaleString('es-AR',{timeZone:'America/Argentina/Buenos_Aires'})}`:null,cache].filter(Boolean).join(' · ');
 }).catch(()=>{document.querySelector('#salud').textContent='Estado de fuentes no disponible.';});
-fetch('/api/v1/fuentes').then(r=>r.json()).then(({items})=>{for(const s of items){const li=el('li','');li.append(link(s.url,s.name),document.createTextNode(' — '+s.role));document.querySelector('#fuentes-lista').append(li);}}).catch(()=>{document.querySelector('#fuentes-lista').textContent='El catálogo no está disponible.';});
+fetch('/api/v1/fuentes').then(r=>r.json()).then(({items})=>{for(const s of items){const li=el('li','');li.append(link(s.url,s.name),document.createTextNode(` — ${s.tier==='oficial'?'Oficial':s.tier==='tecnico'?'Técnica':'Prensa'} · ${s.connection==='automatico'?'Consulta automática (ver estado arriba)':'Referencia manual, sin importación'} · ${s.role}`));document.querySelector('#fuentes-lista').append(li);}}).catch(()=>{document.querySelector('#fuentes-lista').textContent='El catálogo no está disponible.';});
 restoreFilters();
 cargar();

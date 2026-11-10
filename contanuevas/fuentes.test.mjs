@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseBoletin, parseFed, refresh } from './fuentes.mjs';
+import { parseBoletin, parseFed, parseNews, refresh, sourceIds } from './fuentes.mjs';
 
 const notice = (id, date, authority, summary = '') => `<a class="avisos" href="/detalleAviso/primera/${id}/${date}"><div class="linea-aviso"><p class="item">${authority}</p><p><small>Resolución ${id}/2026</small><small>${summary}</small></p></div></a>`;
 const html = `<!doctype html><main>${notice(123, '20261110', 'AGENCIA DE RECAUDACI&Oacute;N Y CONTROL ADUANERO', 'Monotributo')}${notice(124, '20261110', 'MINISTERIO DE CAPITAL HUMANO', 'Convenio Colectivo de Trabajo')}${notice(125, '20261109', 'INSPECCIÓN GENERAL DE JUSTICIA', 'Normas contables')}${notice(126, '20261110', 'MINISTERIO DE DEFENSA', 'Designación')}${notice(127, '20260230', 'AGENCIA DE RECAUDACIÓN Y CONTROL ADUANERO')}${notice(123, '20261110', 'AGENCIA DE RECAUDACIÓN Y CONTROL ADUANERO')}</main>`;
@@ -38,14 +38,14 @@ test('refresh: endpoints fijos y resultados parciales cuando falla una fuente', 
     if (url.includes('boletinoficial')) return new Response('Error', { status: 503 });
     return new Response(xml, { headers: { 'content-type': 'application/rss+xml; charset=UTF-8' } });
   });
-  assert.deepEqual(targets, ['https://www.boletinoficial.gob.ar/seccion/primera', 'https://www.federalreserve.gov/feeds/press_all.xml']);
-  assert.deepEqual(result.status.map(status => [status.ok, status.count]), [[false, 0], [true, 1]]);
+  assert.equal(targets.length, sourceIds.length); assert.equal(targets[0], 'https://www.boletinoficial.gob.ar/seccion/primera');
+  assert.deepEqual(result.status.slice(0,2).map(status => [status.ok, status.count]), [[false, 0], [true, 1]]);
   assert.equal(result.items[0].url, article);
 });
 
 test('refresh: combina ambas fuentes y conserva fecha descendente', async () => {
   const result = await refresh(async url => url.includes('boletinoficial') ? new Response(html, { headers: { 'content-type': 'text/html; charset=UTF-8' } }) : new Response(xml, { headers: { 'content-type': 'text/xml' } }));
-  assert.deepEqual(result.status.map(status => [status.ok, status.count]), [[true, 3], [true, 1]]);
+  assert.deepEqual(result.status.slice(0,2).map(status => [status.ok, status.count]), [[true, 3], [true, 1]]);
   assert.deepEqual(result.items.map(item => item.date), ['2026-11-10', '2026-11-10', '2026-11-09', '2026-11-09']);
 });
 
@@ -55,5 +55,5 @@ test('refresh: rechaza formato incorrecto y corta cuerpo excesivo', async () => 
   const result = await refresh(async url => url.includes('boletinoficial') ? new Response(stream, { headers: { 'content-type': 'text/html' } }) : new Response(xml, { headers: { 'content-type': 'text/html' } }));
   assert.equal(cancelled, true);
   assert.deepEqual(result.items, []);
-  assert.deepEqual(result.status.map(status => status.ok), [false, false]);
+  assert.deepEqual(result.status.slice(0,2).map(status => status.ok), [false, false]);
 });

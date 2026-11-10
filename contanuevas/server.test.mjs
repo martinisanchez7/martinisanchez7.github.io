@@ -1,3 +1,4 @@
+import { fuentes, valorar } from './catalogo-fuentes.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -35,9 +36,9 @@ test('API, interfaz, filtros, controles y continuidad ante fallo',async t=>{
   assert.equal((await req('/server.mjs')).status,404);
   assert.equal((await req('/',{method:'POST'})).status,405);
   assert.equal(await (await req('/',{method:'HEAD'})).text(),'');
-  assert.equal((await json('/api/v1/fuentes')).items.length,7);
+  assert.equal((await json('/api/v1/fuentes')).items.length,fuentes.length);
   await Promise.all([refresh(),refresh()]);assert.equal(call,1);
-  assert.deepEqual((await json('/api/v1/novedades?modo=automatico')).items,[item]);
+  assert.deepEqual((await json('/api/v1/novedades?modo=automatico')).items,[valorar(item)]);
   assert.equal((await json('/api/v1/novedades/fed-test')).id,'fed-test');
   assert.equal((await json('/api/v1/salud')).sources[0].ok,true);
   assert.equal((await req('/api/v1/actualizacion')).status,200);
@@ -64,5 +65,5 @@ test('recupera fichas importadas tras reiniciar con fuentes caídas',async t=>{
   const health=await (await fetch(base+'/api/v1/salud')).json();
   assert.equal(health.cache,'restaurada');
   assert.equal(health.sources[0].ok,false);
-  assert.deepEqual(await (await fetch(base+'/api/v1/novedades/fed-cache')).json(),item);
+  assert.deepEqual(await (await fetch(base+'/api/v1/novedades/fed-cache')).json(),valorar(item));
 });
