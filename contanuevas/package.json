@@ -1,0 +1,1 @@
+{"name":"contanuevas","version":"0.1.0","private":true,"type":"module","engines":{"node":">=24"},"scripts":{"start":"node server.mjs","live":"node --use-system-ca server.mjs --con-fuentes","test":"node --test"}}

@@ -1,0 +1,21 @@
+{
+  "openapi":"3.1.0",
+  "info":{"title":"Contanuevas","version":"0.1.0","description":"Boletín local de prueba. Importaciones sin revisión editorial y referencias históricas de archivo."},
+  "servers":[{"url":"http://127.0.0.1:4195"}],
+  "paths":{
+    "/api/v1/novedades":{"get":{"summary":"Consultar el boletín","parameters":[
+      {"name":"categoria","in":"query","schema":{"type":"string","enum":["impositivo","contable","laboral","internacional"]}},
+      {"name":"q","in":"query","schema":{"type":"string","maxLength":100}},
+      {"name":"modo","in":"query","schema":{"type":"string","enum":["archivo","automatico","editorial"]}},
+      {"name":"desde","in":"query","schema":{"type":"string","format":"date"}},
+      {"name":"hasta","in":"query","schema":{"type":"string","format":"date"}},
+      {"name":"limite","in":"query","schema":{"type":"integer","minimum":1,"maximum":100,"default":20}},
+      {"name":"desde_fila","in":"query","schema":{"type":"integer","minimum":0,"maximum":9999,"default":0}}
+    ],"responses":{"200":{"description":"Resultados paginados","content":{"application/json":{"schema":{"type":"object","required":["items","total","limite","desde_fila"],"properties":{"items":{"type":"array","items":{"$ref":"#/components/schemas/Ficha"}},"total":{"type":"integer"},"limite":{"type":"integer"},"desde_fila":{"type":"integer"}}}}}},"400":{"description":"Filtros inválidos"}}}},
+    "/api/v1/novedades/{id}":{"get":{"summary":"Consultar una ficha","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","pattern":"^[a-z0-9-]+$"}}],"responses":{"200":{"description":"Ficha","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Ficha"}}}},"404":{"description":"Ficha no encontrada"}}}},
+    "/api/v1/fuentes":{"get":{"summary":"Catálogo de fuentes","responses":{"200":{"description":"Objetos con name, url y role en items"}}}},
+    "/api/v1/actualizacion":{"get":{"summary":"Estado operativo de la importación","responses":{"200":{"description":"Importación al día"},"503":{"description":"Importación pendiente, degradada o atrasada, o modo archivo"}}}},
+    "/api/v1/salud":{"get":{"summary":"Estado de la última actualización","responses":{"200":{"description":"Modo, intento de consulta, estado de fuentes, total de entradas y estado opcional de la copia local (sin-copia, guardada, restaurada o no-disponible)"}}}}
+  },
+  "components":{"schemas":{"Ficha":{"type":"object","required":["id","title","summary","category","date","source","url","mode"],"properties":{"id":{"type":"string"},"title":{"type":"string"},"summary":{"type":"string"},"category":{"type":"string","enum":["impositivo","contable","laboral","internacional"]},"date":{"type":"string","format":"date"},"references":{"type":"array","items":{"type":"object","required":["label","url"],"properties":{"label":{"type":"string"},"url":{"type":"string","format":"uri"}}}},"datePrecision":{"type":"string","enum":["month"]},"source":{"type":"string"},"url":{"type":"string","format":"uri"},"mode":{"type":"string","enum":["archivo","automatico","editorial"]}}}}}
+}
