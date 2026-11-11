@@ -8,6 +8,7 @@
   <title>Contanuevas · Boletín normativo</title>
   <link rel="icon" href="/icono.svg">
   <link rel="stylesheet" href="/estilo.css">
+  <link rel="modulepreload" href="/simulador.js">
   <script type="module" src="/app.js"></script>
 </head>
 <body>
@@ -20,7 +21,7 @@
         <a href="/?modo=resumen#boletin" data-view="resumen">Resúmenes</a>
         <a href="/?modo=automatico#boletin" data-view="automatico">Alertas de fuentes</a>
         <a href="/?modo=archivo#boletin" data-view="archivo">Archivo</a>
-        <a href="/?modo=resumen&amp;categoria=laboral#simulador" data-view="simulador">Simulador</a>
+        <a href="/?modo=resumen&amp;categoria=laboral&amp;q=casas-particulares-noviembre-2026#simulador" data-view="simulador">Simulador</a>
         <a href="#fuentes" data-view="fuentes">Fuentes y estado</a>
       </nav>
       <div class="sidebar-bottom">
@@ -39,7 +40,7 @@
         <a class="estado" id="salud" href="#fuentes">Consultando fuentes…</a>
       </header>
       <section id="boletin" aria-labelledby="boletin-title">
-        <div class="section-head"><h2 id="boletin-title">Resúmenes</h2><p id="cantidad" role="status"></p></div>
+        <div class="section-head"><h2 id="boletin-title" tabindex="-1">Resúmenes</h2><p id="cantidad" role="status"></p></div>
         <form id="filtros">
           <div class="fields">
             <label>Buscar<input name="q" type="search" maxlength="100" placeholder="Ganancias, casas particulares, RT 54"></label>
@@ -66,13 +67,14 @@
           </details>
         </form>
         <div id="entradas"></div>
+        <button id="reintentar" type="button" hidden>Volver a cargar</button>
         <button id="mas" type="button" hidden>Ver más fichas</button>
       </section>
       <section id="fuentes" aria-labelledby="fuentes-titulo">
-        <h2 id="fuentes-titulo">Fuentes y estado</h2>
+        <h2 id="fuentes-titulo" tabindex="-1">Fuentes y estado</h2>
         <p id="estado-detalle"></p>
         <p>Las fichas revisadas incluyen cotejo editorial. Las síntesis automáticas extraen datos de textos oficiales y muestran la fecha de consulta.</p>
-        <details><summary>Ver catálogo de fuentes</summary><ul id="fuentes-lista"></ul></details>
+        <details id="catalogo"><summary>Ver catálogo de fuentes</summary><ul id="fuentes-lista" aria-live="polite"></ul></details>
       </section>
       <footer>Contanuevas · MS Servicios Impositivos</footer>
     </main>

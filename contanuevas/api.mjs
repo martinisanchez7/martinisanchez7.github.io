@@ -19,6 +19,39 @@ const order=(a,b)=>b.date.localeCompare(a.date)||a.id.localeCompare(b.id);
 const resumenPorAlerta = new Map(
   editoriales.flatMap(item => (item.alertUrls ?? []).map(url => [url, item.id]))
 );
+const idsLocales=new Set([...archivo,...editoriales].map(item=>item.id));
+const hostsPermitidos=new Set(fuentes.map(source=>new URL(source.url).hostname.replace(/^www\./,'')));
+const fuentesValidas=new Set(fuentes.map(source=>source.id));
+const detalle=/^\/api\/v1\/novedades\/([a-z0-9-]+)$/;
+const sinSintesis=[];
+const indices=new WeakMap();
+
+export function rutaDeApi(path) {
+  if(path==='/api/v1/fuentes') return 'fuentes';
+  if(path==='/api/v1/salud' || path==='/api/v1/actualizacion') return 'estado';
+  if(path==='/api/v1/novedades' || detalle.test(path)) return 'boletin';
+}
+
+function catalogIndex(items,summaries) {
+  const saved=indices.get(items);
+  if(saved?.summaries===summaries) return saved;
+  const automatic=summaries.filter(item=>!resumenPorAlerta.has(item.url));
+  const automaticByUrl=new Map(automatic.map(item=>[item.url,item.id]));
+  const ordered=[...editoriales,...archivo,...items,...automatic].sort(order).map(item=>{
+    const card=valorar(item);
+    if(item.mode==='automatico') {
+      const reviewedId=resumenPorAlerta.get(item.url);
+      const summaryId=automaticByUrl.get(item.url);
+      if(reviewedId) card.reviewedId=reviewedId;
+      if(summaryId) card.summaryId=summaryId;
+    }
+    const searchable=norm(`${card.id} ${card.title} ${card.summary} ${card.source}`);
+    return {card,searchable};
+  });
+  const index={summaries,ordered,byId:new Map(ordered.map(({card})=>[card.id,card]))};
+  indices.set(items,index);
+  return index;
+}
 export function updateStatus(health,lastCompleted) {
   if(health.mode!=='conectado') return 'archivo';
   if(health.cache==='no-disponible') return 'degradada';
@@ -29,45 +62,55 @@ export function updateStatus(health,lastCompleted) {
 export function mergeItems(previous, incoming) {
   const current = new Map();
   for(const item of [...previous,...incoming]) {
-      if(!item || typeof item.id!=='string' || !/^[a-z0-9-]+$/.test(item.id) || [...archivo,...editoriales].some(x=>x.id===item.id) || item.mode!=='automatico' || !categorias.includes(item.category) || !date(item.date) || !['title','summary','source','url'].every(key=>typeof item[key]==='string')) continue;
+      if(!item || typeof item.id!=='string' || !/^[a-z0-9-]+$/.test(item.id) || idsLocales.has(item.id) || item.mode!=='automatico' || !categorias.includes(item.category) || !date(item.date) || !['title','summary','source','url'].every(key=>typeof item[key]==='string')) continue;
       const u = URL.parse(item.url);
-      if(!u || u.protocol!=='https:' || u.username || u.password || u.port || !fuentes.some(s=>new URL(s.url).hostname.replace(/^www\./,'')===u.hostname.replace(/^www\./,''))) continue;
+      if(!u || u.protocol!=='https:' || u.username || u.password || u.port || !hostsPermitidos.has(u.hostname.replace(/^www\./,''))) continue;
     current.set(item.id,item);
   }
   return [...current.values()].sort(order).slice(0,1200);
 }
 
-export function serveApi({pathname,searchParams:p},send,health,items,lastCompleted,summaries=[]) {
+export function serveApi({pathname,searchParams:p},send,health,items,lastCompleted,summaries=sinSintesis) {
   if(!pathname.startsWith('/api/')) return undefined;
-  const automatic = summaries.filter(item=>!resumenPorAlerta.has(item.url));
-  const actualizacion=updateStatus(health,lastCompleted);
-  if(pathname==='/api/v1/salud') return send(200,{...health,entries:editoriales.length+archivo.length+items.length+automatic.length,actualizacion});
+  if(pathname==='/api/v1/salud') {
+    const automatic=summaries.filter(item=>!resumenPorAlerta.has(item.url));
+    return send(200,{...health,entries:editoriales.length+archivo.length+items.length+automatic.length,actualizacion:updateStatus(health,lastCompleted)});
+  }
   if(pathname==='/api/v1/actualizacion') {
-    const estado=actualizacion;
+    const estado=updateStatus(health,lastCompleted);
     return send(estado==='al-dia'?200:503,{estado,ultimoIntento:health.lastAttempt,fuentes:health.sources});
   }
   if(pathname==='/api/v1/fuentes') return send(200,{items:fuentes});
-  const automaticByUrl = new Map(automatic.map(item=>[item.url,item.id]));
-  const all=[...editoriales,...archivo,...items,...automatic].map(item => {
-    const ficha=valorar(item);
-    const reviewedId=item.mode==='automatico' && resumenPorAlerta.get(item.url);
-    const summaryId=item.mode==='automatico' && automaticByUrl.get(item.url);
-    return {...ficha,...(reviewedId?{reviewedId}:{}),...(summaryId?{summaryId}:{})};
-  }).sort(order);
-  const detail=pathname.match(/^\/api\/v1\/novedades\/([a-z0-9-]+)$/);
+  const detail=pathname.match(detalle);
   if(detail) {
-    const id=detail[1];
-    const item=all.find(x=>x.id===id);
+    const item=catalogIndex(items,summaries).byId.get(detail[1]);
     return item?send(200,item):send(404,{error:'No se encontró la ficha'});
   }
   if(pathname==='/api/v1/novedades') {
     const category=p.get('categoria'),q=(p.get('q')??'').trim(),mode=p.get('modo'),desde=p.get('desde'),hasta=p.get('hasta');
     const respaldo=p.get('respaldo'),importancia=p.get('importancia'),fuente=p.get('fuente');
     const limit=p.get('limite')??'20',offset=p.get('desde_fila')??'0';
-    if([...p.keys()].some(k=>!['categoria','q','modo','desde','hasta','limite','desde_fila','respaldo','importancia','fuente'].includes(k)||p.getAll(k).length>1) || (respaldo!==null&&!['oficial','tecnico','periodistico','sin-clasificar'].includes(respaldo)) || (importancia!==null&&!['alta','seguimiento'].includes(importancia)) || (fuente!==null&&!fuentes.some(s=>s.id===fuente)) || (category!==null&&!categorias.includes(category)) || (mode!==null&&!['archivo','automatico','editorial','sintesis','resumen'].includes(mode)) || q.length>100 || (desde!==null&&!date(desde)) || (hasta!==null&&!date(hasta)) || (desde&&hasta&&desde>hasta) || !/^\d{1,3}$/.test(limit)||+limit<1||+limit>100||!/^\d{1,4}$/.test(offset)) return send(400,{error:'Filtros inválidos'});
-    const modeMatches=x=>!mode || x.mode===mode || (mode==='resumen'&&['editorial','sintesis'].includes(x.mode));
-    const matches=all.filter(x=>(!respaldo||x.sourceTier===respaldo)&&(!importancia||x.importance===importancia)&&(!fuente||x.sourceId===fuente)&&(!category||x.category===category)&&modeMatches(x)&&(!desde||x.date>=desde)&&(!hasta||x.date<=hasta)&&(!q||norm(`${x.id} ${x.title} ${x.summary} ${x.source}`).includes(norm(q))));
-    return send(200,{total:matches.length,limite:+limit,desde_fila:+offset,items:matches.slice(+offset,+offset+ +limit)});
+    const keys=['categoria','q','modo','desde','hasta','limite','desde_fila','respaldo','importancia','fuente'];
+    const hasInvalidKey=[...p].length>keys.length || [...p.keys()].some(key=>!keys.includes(key)||p.getAll(key).length>1);
+    if(hasInvalidKey || (respaldo!==null&&!['oficial','tecnico','periodistico','sin-clasificar'].includes(respaldo))
+      || (importancia!==null&&!['alta','seguimiento'].includes(importancia)) || (fuente!==null&&!fuentesValidas.has(fuente))
+      || (category!==null&&!categorias.includes(category)) || (mode!==null&&!['archivo','automatico','editorial','sintesis','resumen'].includes(mode))
+      || q.length>100 || (desde!==null&&!date(desde)) || (hasta!==null&&!date(hasta)) || (desde&&hasta&&desde>hasta)
+      || !/^\d{1,3}$/.test(limit) || +limit<1 || +limit>100 || !/^\d{1,4}$/.test(offset)) {
+      return send(400,{error:'Filtros inválidos'});
+    }
+    const query=norm(q);
+    const page=[];
+    let total=0;
+    for(const {card,searchable} of catalogIndex(items,summaries).ordered) {
+      if(respaldo && card.sourceTier!==respaldo || importancia && card.importance!==importancia || fuente && card.sourceId!==fuente) continue;
+      if(category && card.category!==category || desde && card.date<desde || hasta && card.date>hasta) continue;
+      if(mode && card.mode!==mode && !(mode==='resumen' && ['editorial','sintesis'].includes(card.mode))) continue;
+      if(query && !searchable.includes(query)) continue;
+      if(total>=+offset && page.length<+limit) page.push(card);
+      total++;
+    }
+    return send(200,{total,limite:+limit,desde_fila:+offset,items:page});
   }
   return send(404,{error:'Ruta no encontrada'});
 }

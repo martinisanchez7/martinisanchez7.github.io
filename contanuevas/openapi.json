@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Contanuevas",
-    "version": "0.3.1",
+    "version": "0.4.0",
     "description": "Boletín con alertas pendientes de cotejo y resúmenes normativos revisados. El respaldo de la fuente y la prioridad temática se informan por separado."
   },
   "servers": [
@@ -155,6 +155,14 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "Las respuestas públicas exitosas pueden reutilizarse durante 15 segundos.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "400": {
@@ -186,6 +194,14 @@
                   "$ref": "#/components/schemas/Ficha"
                 }
               }
+            },
+            "headers": {
+              "Cache-Control": {
+                "description": "Las respuestas públicas exitosas pueden reutilizarse durante 15 segundos.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -199,7 +215,15 @@
         "summary": "Catálogo de fuentes",
         "responses": {
           "200": {
-            "description": "Objetos con name, url y role en items"
+            "description": "Objetos con name, url y role en items",
+            "headers": {
+              "Cache-Control": {
+                "description": "Las respuestas públicas exitosas pueden reutilizarse durante 15 segundos.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

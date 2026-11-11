@@ -27,10 +27,16 @@ export const fuentes = [
 ].map(([id,name,url,tier,role,connection,feed])=>({id,name,url,tier,role,connection,...(feed?{feed}:{})}));
 
 export const niveles={oficial:'Fuente oficial',tecnico:'Referencia técnica',periodistico:'Cobertura periodística'};
+const fuentesPorId=new Map(fuentes.map(source=>[source.id,source]));
+const fuentesPorHost=new Map();
+for(const source of fuentes) {
+  const host=new URL(source.url).hostname;
+  if(!fuentesPorHost.has(host)) fuentesPorHost.set(host,source);
+}
 export function fuenteDe(item) {
-  if(item.sourceId) return fuentes.find(s=>s.id===item.sourceId);
-  let host; try{host=new URL(item.url).hostname;}catch{return;}
-  return fuentes.find(s=>new URL(s.url).hostname===host);
+  if(item.sourceId) return fuentesPorId.get(item.sourceId);
+  const host=URL.parse(item.url)?.hostname;
+  return fuentesPorHost.get(host);
 }
 export function valorar(item) {
   const source=fuenteDe(item);

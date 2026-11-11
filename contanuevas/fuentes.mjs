@@ -5,6 +5,16 @@ const MAX_BYTES = 2 * 1024 * 1024;
 const TIMEOUT_MS = 8_000;
 const BORA = 'https://www.boletinoficial.gob.ar';
 const FED = 'https://www.federalreserve.gov';
+const dayOptions={year:'numeric',month:'2-digit',day:'2-digit'};
+const argDay=new Intl.DateTimeFormat('en-CA',{...dayOptions,timeZone:'America/Argentina/Buenos_Aires'});
+const fedDay=new Intl.DateTimeFormat('en-CA',{...dayOptions,timeZone:'America/New_York'});
+const rssStart=/^\s*(?:<\?xml\s[^?]*\?>\s*)?<rss\b[^>]*>\s*<channel\b/i;
+
+function checkRss(xml) {
+  if(!rssStart.test(xml) || !/<\/channel\s*>\s*<\/rss\s*>\s*$/i.test(xml)) {
+    throw new Error('Formato RSS no reconocido');
+  }
+}
 const entities = Object.freeze({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú', Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú', ntilde: 'ñ', Ntilde: 'Ñ', ordm: 'º', deg: '°' });
 
 function decode(value) {
@@ -87,11 +97,10 @@ function xmlField(item, key) {
 }
 
 export function parseFed(xml) {
-  if (!/<rss\b/i.test(xml) || !/<channel\b/i.test(xml)) throw new Error('Formato RSS no reconocido');
+  checkRss(xml);
   const entries = blocks(xml, /<(\/?)item\b([^<>]{0,512})>/gi, 65_536);
   const items = [];
   let examined = 0;
-  const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' });
   for (const [, entry] of entries) {
     if (++examined > 80) break;
     const title = plain(xmlField(entry, 'title'), 260);
@@ -102,7 +111,7 @@ export function parseFed(xml) {
     if (link.origin !== FED || link.username || link.password || !link.pathname.startsWith('/newsevents/pressreleases/')) continue;
     link.search = '';
     link.hash = '';
-    const date = validDay(formatter.format(published));
+    const date = validDay(fedDay.format(published));
     if (!date) continue;
     const id = createHash('sha256').update(link.href).digest('hex').slice(0, 16);
     items.push({ id: `fed-${id}`, title, summary: 'Comunicado de la Reserva Federal. Consultá la publicación original para conocer su alcance.', category: 'internacional', date, url: link.href, source: 'Reserva Federal (EE. UU.)', mode: 'automatico' });
@@ -114,13 +123,18 @@ export function parseFed(xml) {
 export async function download(fetcher, source) {
   const signal = AbortSignal.timeout(TIMEOUT_MS);
   const response = await fetcher(source.url, { signal, redirect: 'manual', headers: { accept: source.accept, 'user-agent': 'Contanuevas/0.1 (lector de fuentes publicas)' } });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  if (response.redirected || (response.url && response.url !== source.url)) throw new Error('Origen inesperado');
   const kind = response.headers.get('content-type') ?? '';
   const mislabeledFinanceFeed = source.url==='https://www.ambito.com/rss/pages/finanzas.xml'
     && /^application\/octet-stream(?:\s*;|\s*$)/i.test(kind);
-  if (!source.type.test(kind) && !mislabeledFinanceFeed) throw new Error('Tipo de contenido inesperado');
-  if (Number(response.headers.get('content-length')) > MAX_BYTES) throw new Error('Respuesta demasiado grande');
+  let rejection;
+  if (!response.ok) rejection=`HTTP ${response.status}`;
+  else if (response.redirected || (response.url && response.url !== source.url)) rejection='Origen inesperado';
+  else if (!source.type.test(kind) && !mislabeledFinanceFeed) rejection='Tipo de contenido inesperado';
+  else if (Number(response.headers.get('content-length')) > MAX_BYTES) rejection='Respuesta demasiado grande';
+  if(rejection) {
+    await response.body?.cancel().catch(()=>{});
+    throw new Error(rejection);
+  }
   if (!response.body) throw new Error('Respuesta sin contenido');
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -135,9 +149,7 @@ export async function download(fetcher, source) {
       body += decoder.decode(value, { stream: true });
     }
     body += decoder.decode();
-    if(mislabeledFinanceFeed && !/^\s*(?:<\?xml\s[^?]*\?>\s*)?<rss\b[^>]*>\s*<channel\b/i.test(body)) {
-      throw new Error('El canal no contiene un RSS');
-    }
+    if(mislabeledFinanceFeed) checkRss(body);
     return body;
   } finally {
     if (bytes > MAX_BYTES) await reader.cancel().catch(() => {});
@@ -151,7 +163,7 @@ const sources = [
 ];
 
 export function parseNews(xml, source) {
-  if (!/<rss\b/i.test(xml) || !/<channel\b/i.test(xml)) throw new Error('Formato RSS no reconocido');
+  checkRss(xml);
   const origin=new URL(source.url).hostname.replace(/^www\./,'');
   const items=[];
   let examined=0,recognized=0;
@@ -169,7 +181,7 @@ export function parseNews(xml, source) {
     if(!category) category=/\b(fed|estados unidos|wall street|china|bce|europa|paraguay)\b/i.test(title)?'internacional':'economia';
     link.search='';link.hash='';
     const id=createHash('sha256').update(link.href).digest('hex').slice(0,16);
-    const date=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Argentina/Buenos_Aires',year:'numeric',month:'2-digit',day:'2-digit'}).format(published);
+    const date=argDay.format(published);
     items.push({id:`prensa-${id}`,title,summary:'Alerta periodística pendiente de cotejo con el documento original. Todavía no hay un resumen normativo verificado.',date,category,url:link.href,source:source.name,sourceId:source.id,mode:'automatico'});
   }
   if(/<item\b/i.test(xml)&&!recognized) throw new Error('Entradas RSS no reconocidas');
@@ -179,8 +191,9 @@ export function parseNews(xml, source) {
 for(const source of fuentes.filter(s=>s.feed)) sources.push({id:source.id,url:source.feed,accept:'application/rss+xml, application/xml, text/xml',type:/^(?:text\/xml|application\/(?:rss\+xml|xml))\b/i,parse:xml=>parseNews(xml,source)});
 export const sourceIds=sources.map(s=>s.id);
 
-export async function refresh(fetcher = fetch) {
-  const result = await Promise.all(sources.map(async source => {
+export async function refresh(fetcher = fetch, ids) {
+  const active=ids? sources.filter(source=>ids.includes(source.id)):sources;
+  const fetchSource=async source => {
     try {
       const items = source.parse(await download(fetcher, source)).map(item=>({...item,sourceId:source.id}));
       return { items, status: { id: source.id, ok: true, count: items.length } };
@@ -188,6 +201,10 @@ export async function refresh(fetcher = fetch) {
       const message = error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'Tiempo de espera agotado' : 'No se pudo leer o validar la fuente';
       return { items: [], status: { id: source.id, ok: false, count: 0, error: message } };
     }
-  }));
+  };
+  const result=[];
+  for(let i=0;i<active.length;i+=4) {
+    result.push(...await Promise.all(active.slice(i,i+4).map(fetchSource)));
+  }
   return { items: unique(result.flatMap(source => source.items)).sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)), status: result.map(source => source.status) };
 }

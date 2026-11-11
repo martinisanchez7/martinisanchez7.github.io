@@ -4,6 +4,7 @@ const form = document.querySelector('#filtros');
 const list = document.querySelector('#entradas');
 const count = document.querySelector('#cantidad');
 const more = document.querySelector('#mas');
+const retry = document.querySelector('#reintentar');
 const navigation = document.querySelector('#navegacion');
 const menu = document.querySelector('.menu-toggle');
 const filters = ['q','categoria','modo','respaldo','importancia','desde','hasta'];
@@ -71,7 +72,7 @@ function renderItem(item) {
 
   if(item.brief) {
     const detail = element('details');
-    detail.open = applied.get('q')===item.id;
+    detail.open = applied.get('q')===item.id && location.hash!=='#simulador';
     detail.append(element('summary','Ver alcance, fechas y fuentes'));
     const labels = {whatChanged:'Qué cambió',who:'A quién alcanza',when:'Desde cuándo',action:'Qué hacer',limits:'Qué revisar'};
     for(const [key,label] of Object.entries(labels)) {
@@ -136,6 +137,8 @@ function openAnchor() {
   if(target.id==='simulador') {
     target.open = true;
     target.querySelector('summary').focus({preventScroll:true});
+  } else {
+    target.querySelector('h2')?.focus({preventScroll:true});
   }
   target.scrollIntoView({block:'start'});
 }
@@ -152,6 +155,8 @@ async function load(append=false) {
     syncNavigation();
   }
   more.hidden = true;
+  retry.hidden = true;
+  list.setAttribute('aria-busy','true');
   count.textContent = 'Buscando…';
   const params = new URLSearchParams(applied);
   if(params.get('modo')==='todos') params.delete('modo');
@@ -172,7 +177,13 @@ async function load(append=false) {
     more.hidden = offset>=data.total;
     if(!data.total) list.append(element('p','No hay fichas con esos filtros. Probá otra sección o elegí Alertas de fuentes.'));
   } catch(error) {
-    if(error.name!=='AbortError') count.textContent = 'No se pudo cargar el boletín. Volvé a buscar.';
+    if(error.name!=='AbortError' && !next.signal.aborted) {
+      count.textContent = 'No se pudo cargar el boletín.';
+      retry.hidden = false;
+      retry.onclick = ()=>load(append);
+    }
+  } finally {
+    if(request===next) list.setAttribute('aria-busy','false');
   }
 }
 
@@ -187,6 +198,12 @@ addEventListener('hashchange',syncNavigation);
 more.addEventListener('click',()=>load(true));
 menu.addEventListener('click',()=>{
   menu.setAttribute('aria-expanded',String(menu.getAttribute('aria-expanded')!=='true'));
+});
+document.querySelector('.sidebar').addEventListener('keydown',event=>{
+  if(event.key==='Escape' && menu.getAttribute('aria-expanded')==='true') {
+    menu.setAttribute('aria-expanded','false');
+    menu.focus();
+  }
 });
 navigation.addEventListener('click',event=>{
   const link = event.target.closest('a[data-view]');
@@ -233,10 +250,19 @@ async function loadCatalog() {
       row.append(sourceLink(source.url,source.name),document.createTextNode(' · '+(tiers[source.tier]??'Referencia')+' · '+source.role));
       list.append(row);
     }
-  } catch { list.textContent = 'El catálogo no está disponible.'; }
+  } catch {
+    list.textContent = 'El catálogo no está disponible. Cerralo y volvé a abrirlo para reintentar.';
+    document.querySelector('#catalogo').dataset.loaded='false';
+  }
 }
 
 restoreFilters();
 load().then(()=>{if(location.hash==='#simulador') openAnchor();});
 loadStatus();
-loadCatalog();
+const catalog = document.querySelector('#catalogo');
+catalog.addEventListener('toggle',()=>{
+  if(catalog.open && catalog.dataset.loaded!=='true') {
+    catalog.dataset.loaded='true';
+    loadCatalog();
+  }
+});
