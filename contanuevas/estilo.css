@@ -32,7 +32,11 @@ h3{font-size:clamp(23px,3vw,34px);margin:5px 0 7px}
 #cantidad{color:var(--muted);font-size:16px;margin:0}
 form{border-bottom:1px solid var(--line);padding:0 0 13px}
 .fields,.advanced-fields{display:grid;gap:12px;align-items:end}
-.fields{grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto}
+.fields{grid-template-columns:minmax(0,1fr) auto}
+#secciones{display:flex;flex-wrap:wrap;gap:6px 8px;margin:0 0 13px}
+#secciones a{display:inline-flex;align-items:center;min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radius:3px;background:var(--panel);text-decoration:none;font-size:16px}
+#secciones a:hover{border-color:var(--ink)}
+#secciones a[aria-current=true]{background:var(--nav);border-color:var(--nav);color:#fff}
 .advanced-fields{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));padding:8px 0}
 label{display:grid;gap:4px;font-size:16px;font-weight:600}
 input,select,button{min-height:44px;font:inherit;border:1px solid #9c978d;border-radius:3px;padding:6px 10px;min-width:0;background:var(--panel);color:var(--ink)}
@@ -86,6 +90,6 @@ footer{font-size:15px;color:var(--muted);border-top:1px solid var(--line);paddin
   .mast{display:block}
   .estado{display:inline-block;margin-top:10px}
   .fields{grid-template-columns:minmax(0,1fr) auto}
-  .fields label:first-child{grid-column:1/-1}
+  #secciones a{padding-inline:9px}
   .advanced-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 }

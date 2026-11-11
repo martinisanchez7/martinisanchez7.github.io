@@ -26,7 +26,7 @@
       </nav>
       <div class="sidebar-bottom">
         <p>Para desarrolladores</p>
-        <a href="/api/v1/novedades">API JSON ↗</a>
+        <a id="api-novedades" href="/api/v1/novedades">API JSON ↗</a>
         <a href="/openapi.json">OpenAPI ↗</a>
       </div>
     </aside>
@@ -41,14 +41,18 @@
       </header>
       <section id="boletin" aria-labelledby="boletin-title">
         <div class="section-head"><h2 id="boletin-title" tabindex="-1">Resúmenes</h2><p id="cantidad" role="status"></p></div>
+        <nav id="secciones" aria-label="Secciones del boletín">
+          <a href="/#boletin" data-category="" aria-current="true">Todas</a>
+          <a href="/?categoria=impositivo#boletin" data-category="impositivo">Impositivo</a>
+          <a href="/?categoria=contable#boletin" data-category="contable">Contable</a>
+          <a href="/?categoria=laboral#boletin" data-category="laboral">Laboral</a>
+          <a href="/?categoria=economia#boletin" data-category="economia">Economía y finanzas</a>
+          <a href="/?categoria=internacional#boletin" data-category="internacional">Mercados internacionales</a>
+        </nav>
         <form id="filtros">
+          <input type="hidden" name="categoria" value="">
           <div class="fields">
             <label>Buscar<input name="q" type="search" maxlength="100" placeholder="Ganancias, casas particulares, RT 54"></label>
-            <label>Sección<select name="categoria">
-              <option value="">Todas las secciones</option><option value="impositivo">Impositivo</option>
-              <option value="contable">Contable</option><option value="laboral">Laboral</option>
-              <option value="economia">Economía y finanzas</option><option value="internacional">Mercados internacionales</option>
-            </select></label>
             <button>Buscar</button>
           </div>
           <details class="advanced">

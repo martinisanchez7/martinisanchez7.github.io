@@ -6,6 +6,8 @@ const count = document.querySelector('#cantidad');
 const more = document.querySelector('#mas');
 const retry = document.querySelector('#reintentar');
 const navigation = document.querySelector('#navegacion');
+const sections = document.querySelector('#secciones');
+const apiLink = document.querySelector('#api-novedades');
 const menu = document.querySelector('.menu-toggle');
 const filters = ['q','categoria','modo','respaldo','importancia','desde','hasta'];
 const categories = {impositivo:'Impositivo',contable:'Contable',laboral:'Laboral',internacional:'Mercados internacionales',economia:'Economía y finanzas'};
@@ -108,7 +110,10 @@ function renderItem(item) {
 
 function restoreFilters() {
   const params = new URLSearchParams(location.search);
-  for(const name of filters) form.elements.namedItem(name).value = params.get(name)??(name==='modo'?'resumen':'');
+  const validCategory = Object.hasOwn(categories,params.get('categoria'));
+  const defaultMode = validCategory?'todos':'resumen';
+  for(const name of filters) form.elements.namedItem(name).value = params.get(name)??(name==='modo'?defaultMode:'');
+  if(!Object.hasOwn(categories,form.elements.categoria.value)) form.elements.categoria.value = '';
   if(!form.elements.modo.value) form.elements.modo.value = 'resumen';
   document.querySelector('.advanced').open = ['desde','hasta','respaldo','importancia'].some(name=>params.has(name))
     || ['todos','editorial','sintesis'].includes(params.get('modo'));
@@ -122,13 +127,31 @@ function formFilters() {
 
 function syncNavigation() {
   const mode = form.elements.modo.value;
+  const category = form.elements.categoria.value;
   const selected = location.hash==='#fuentes'?'fuentes'
     : location.hash==='#simulador'?'simulador'
     : ['automatico','archivo'].includes(mode)?mode:'resumen';
   for(const link of navigation.querySelectorAll('a[data-view]')) {
     if(link.dataset.view===selected) link.setAttribute('aria-current','page');
     else link.removeAttribute('aria-current');
+    if(['resumen','automatico','archivo'].includes(link.dataset.view)) {
+      const params = new URLSearchParams({modo:link.dataset.view});
+      if(category) params.set('categoria',category);
+      link.href = '/?'+params+'#boletin';
+    }
   }
+  for(const link of sections.querySelectorAll('a[data-category]')) {
+    const next = link.dataset.category;
+    const params = new URLSearchParams(applied);
+    if(!new URLSearchParams(location.search).has('modo')) params.delete('modo');
+    if(next) params.set('categoria',next);
+    else params.delete('categoria');
+    if(location.hash==='#simulador') params.delete('q');
+    link.href = '/?'+params+'#boletin';
+    if(next===category) link.setAttribute('aria-current','true');
+    else link.removeAttribute('aria-current');
+  }
+  apiLink.href = '/api/v1/novedades'+(category?'?'+new URLSearchParams({categoria:category}):'');
 }
 
 function openAnchor() {
@@ -151,7 +174,9 @@ async function load(append=false) {
     offset = 0;
     applied = formFilters();
     list.replaceChildren();
-    document.querySelector('#boletin-title').textContent = modes[applied.get('modo')]??'Boletín';
+    const heading = modes[applied.get('modo')]??'Boletín';
+    const category = categories[applied.get('categoria')];
+    document.querySelector('#boletin-title').textContent = category?heading+' · '+category:heading;
     syncNavigation();
   }
   more.hidden = true;
@@ -175,7 +200,16 @@ async function load(append=false) {
     offset += data.items.length;
     count.textContent = data.total+(data.total===1?' ficha':' fichas');
     more.hidden = offset>=data.total;
-    if(!data.total) list.append(element('p','No hay fichas con esos filtros. Probá otra sección o elegí Alertas de fuentes.'));
+    if(!data.total) {
+      const message = element('p','No hay fichas con esos filtros. ');
+      const category = applied.get('categoria');
+      if(category && applied.get('modo')!=='todos') {
+        const link = element('a','Ver todas las fichas de esta sección');
+        link.href = '/?'+new URLSearchParams({modo:'todos',categoria:category})+'#boletin';
+        message.append(link);
+      } else message.append('Probá otra sección o ajustá los filtros.');
+      list.append(message);
+    }
   } catch(error) {
     if(error.name!=='AbortError' && !next.signal.aborted) {
       count.textContent = 'No se pudo cargar el boletín.';
@@ -205,8 +239,8 @@ document.querySelector('.sidebar').addEventListener('keydown',event=>{
     menu.focus();
   }
 });
-navigation.addEventListener('click',event=>{
-  const link = event.target.closest('a[data-view]');
+function followFilterLink(event) {
+  const link = event.target.closest('a[data-view],a[data-category]');
   if(!link || event.button!==0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
   event.preventDefault();
   menu.setAttribute('aria-expanded','false');
@@ -220,7 +254,9 @@ navigation.addEventListener('click',event=>{
     syncNavigation();
     openAnchor();
   }
-});
+}
+navigation.addEventListener('click',followFilterLink);
+sections.addEventListener('click',followFilterLink);
 
 async function loadStatus() {
   const badge = document.querySelector('#salud');
