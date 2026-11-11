@@ -20,10 +20,7 @@ async function receiver() {
   return {pair,point,auth,keys:{p256dh:b64(point),auth:b64(auth)}};
 }
 
-test('El destinatario recupera el mensaje cifrado con su propia clave',async()=>{
-  const {pair,point,auth,keys}=await receiver();
-  const message={title:'Contanuevas',body:'Aviso laboral',category:'laboral'};
-  const frame=await encryptPush(keys,message);
+async function decrypt(frame,{pair,point,auth}) {
   assert.equal(new DataView(frame.buffer).getUint32(16),4096);
   assert.equal(frame[20],65);
   const remote=frame.slice(21,86);
@@ -36,7 +33,13 @@ test('El destinatario recupera el mensaje cifrado con su propia clave',async()=>
   decipher.setAuthTag(frame.slice(-16));
   const decoded=Buffer.concat([decipher.update(frame.slice(86,-16)),decipher.final()]);
   assert.equal(decoded.at(-1),2);
-  assert.deepEqual(JSON.parse(decoded.subarray(0,-1)),message);
+  return JSON.parse(decoded.subarray(0,-1));
+}
+
+test('El destinatario recupera el mensaje cifrado con su propia clave',async()=>{
+  const device=await receiver();
+  const message={title:'Contanuevas',body:'Aviso laboral',category:'laboral'};
+  assert.deepEqual(await decrypt(await encryptPush(device.keys,message),device),message);
 });
 
 test('Rutas de avisos limitan origen, método y destinos push',async()=>{
@@ -49,6 +52,8 @@ test('Rutas de avisos limitan origen, método y destinos push',async()=>{
 });
 
 test('El servidor guarda, entrega al vencer y elimina el aviso con la credencial del dispositivo',async t=>{
+  t.mock.timers.enable({apis:['Date'],now:Date.parse('2026-11-11T09:00:00Z')});
+  t.after(()=>t.mock.timers.reset());
   const db=new DatabaseSync(':memory:');
   t.after(()=>db.close());
   const store=new Map();
@@ -59,7 +64,7 @@ test('El servidor guarda, entrega al vencer y elimina el aviso con la credencial
       sql:{exec(query,...args){
         if(query.startsWith('CREATE')) {db.exec(query);return;}
         const statement=db.prepare(query);
-        if(query.startsWith('SELECT')) return {toArray:()=>statement.all(...args),one:()=>statement.get(...args)};
+        if(/^(SELECT|PRAGMA)/.test(query)) return {toArray:()=>statement.all(...args),one:()=>statement.get(...args)};
         return {rowsWritten:statement.run(...args).changes};
       }},
       transactionSync:fn=>fn(),
@@ -67,8 +72,9 @@ test('El servidor guarda, entrega al vencer y elimina el aviso con la credencial
       setAlarm:at=>{alarm=at;},deleteAlarm:()=>{alarm=undefined;}
     }
   };
-  const object=new AvisosDiarios(ctx);
-  const {keys}=await receiver();
+  const object=new AvisosDiarios(ctx,{BOLETIN:{get:async()=>({items:[],summaries:[]})}});
+  const device=await receiver();
+  const {keys}=device;
   const url='https://test.invalid/api/v1/avisos';
   const endpoint='https://fcm.googleapis.com/fcm/send/token-de-prueba';
   const save=()=>object.fetch(new Request(url,{method:'POST',headers:{'Content-Type':'application/json'},
@@ -78,22 +84,33 @@ test('El servidor guarda, entrega al vencer y elimina el aviso con la credencial
   assert.equal(config.privateKey,undefined);
   const saved=await (await save()).json();
   assert.equal(saved.enabled,true);
+  assert.equal(saved.profile,'');
   assert.equal(alarm,Date.parse(saved.nextAt));
   assert.equal((await save()).status,409);
+  const edit=(profile)=>object.fetch(new Request(url,{method:'POST',headers:{
+    'Content-Type':'application/json',Authorization:'Bearer '+saved.credential
+  },body:JSON.stringify({hour:'09:30',category:'impositivo',jurisdiction:'caba',profile,subscription:{endpoint,keys}})}));
+  assert.equal((await edit('__proto__')).status,400);
+  const preferences=await (await edit('impuestos')).json();
+  assert.equal(preferences.credential,saved.credential);
+  assert.equal(preferences.jurisdiction,'caba');
+  assert.equal(preferences.profile,'impuestos');
 
   const originalFetch=globalThis.fetch;
-  let delivered=0;
+  const delivered=[];
   globalThis.fetch=async (dest,init)=>{
     assert.equal(dest,endpoint);
     assert.equal(init.headers['Content-Encoding'],'aes128gcm');
     assert.match(init.headers.Authorization,/^vapid t=/);
-    delivered++;
+    delivered.push(await decrypt(init.body,device));
     return new Response(null,{status:201});
   };
-  t.mock.timers.enable({apis:['Date'],now:alarm});
+  t.mock.timers.setTime(alarm);
   try { await object.alarm(); await object.alarm(); }
-  finally {globalThis.fetch=originalFetch;t.mock.timers.reset();}
-  assert.equal(delivered,1);
+  finally {globalThis.fetch=originalFetch;}
+  assert.equal(delivered.length,1);
+  assert.equal(delivered[0].itemId,'caba-agip-atencion-11-noviembre-2026');
+  assert.match(delivered[0].body,/no atenderá al público/);
   assert.equal(alarm,Date.parse(saved.nextAt)+86_400_000);
   const deleted=await object.fetch(new Request(url,{method:'DELETE',headers:{Authorization:'Bearer '+saved.credential}}));
   assert.equal(deleted.status,200);

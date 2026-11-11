@@ -1,6 +1,76 @@
 export const categorias = ['impositivo', 'contable', 'laboral', 'internacional', 'economia'];
 export const editoriales = [
   {
+    id:'caba-agip-atencion-11-noviembre-2026',category:'impositivo',jurisdictions:['caba'],
+    date:'2026-11-11',title:'CABA: sin atención presencial de AGIP en la sede del Consejo el 11 de noviembre',
+    summary:'El Consejo de CABA informó que su oficina de AGIP no atenderá al público el 11 de noviembre por el Día del Empleado Municipal.',
+    source:'Consejo Profesional de Ciencias Económicas de CABA',
+    url:'https://www.consejo.org.ar/servicios/oficinas-gubernamentales',mode:'editorial',
+    brief:{whatChanged:'La oficina de AGIP en la sede del Consejo suspende la atención al público ese día.',
+      who:'Quienes tenían previsto hacer un trámite presencial en esa sede.',
+      when:'Miércoles 11 de noviembre de 2026.',
+      action:'Para un trámite con plazo, consultá el calendario oficial de AGIP y el canal digital del trámite. El aviso del Consejo se refiere a atención presencial.',
+      reviewedAt:'2026-11-11',scope:'Atención presencial en CABA'},
+    references:[{label:'Calendario tributario de AGIP',url:'https://www.agip.gob.ar/vencimientos/'}]
+  },
+  {
+    id:'caba-agip-339-transparencia-fiscal',category:'impositivo',jurisdictions:['caba'],
+    date:'2026-09-08',title:'CABA: hasta el 1 de enero de 2027 para adaptar los comprobantes de Ingresos Brutos',
+    summary:'La Resolución AGIP 339/2026 prorrogó hasta el 1 de enero de 2027 el plazo para adecuar sistemas y discriminar la incidencia de Ingresos Brutos en comprobantes a consumidores finales.',
+    source:'Boletín Oficial de CABA · Resolución AGIP 339/2026',
+    url:'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/875535',mode:'editorial',
+    brief:{whatChanged:'La fecha límite para adaptar los sistemas pasa del 30 de septiembre de 2026 al 1 de enero de 2027.',
+      who:'Contribuyentes y responsables alcanzados por la Resolución AGIP 169/2026 para operaciones a consumidores finales en CABA.',
+      when:'La prórroga se publicó el 8 de septiembre de 2026.',
+      action:'Revisá cómo se muestra el impuesto en los comprobantes que emite tu sistema según la Resolución 169 y sus modificatorias.',
+      reviewedAt:'2026-11-11',scope:'Ingresos Brutos · CABA'},
+    references:[{label:'Resolución AGIP 169/2026 y normas relacionadas',url:'https://boletinoficial.buenosaires.gob.ar/normativaba/norma/851654'}]
+  },
+  {
+    id:'comarb-11-vencimientos-noviembre-2026',category:'impositivo',jurisdictions:['interjurisdiccional'],
+    date:'2026-10-19',title:'Convenio Multilateral: nuevos vencimientos de SIFERE, SIRCAR y SIRTAC',
+    summary:'El anticipo de octubre por SIFERE vence del 17 al 20 de noviembre según CUIT. Los vencimientos alcanzados de SIRCAR y SIRTAC se trasladaron al 13 de noviembre.',
+    source:'Comisión Arbitral · RG 11/2026',url:'https://www.ca.gob.ar/descargas/sifere/vencimientos/2026-11.pdf',mode:'editorial',
+    brief:{whatChanged:'SIRCAR pasa del 9 o 10 al 13 de noviembre y SIRTAC pasa del 9 al 13, en ambos casos para la segunda quincena de octubre.',
+      who:'Agentes alcanzados de SIRCAR y SIRTAC, y contribuyentes de Convenio Multilateral por el anticipo de octubre.',
+      when:'13 de noviembre para los agentes alcanzados y del 17 al 20 de noviembre para el anticipo de octubre por SIFERE.',
+      action:'Consultá la fecha asignada a la terminación de tu CUIT en el calendario de SIFERE y el sistema correspondiente para declarar y pagar.',
+      reviewedAt:'2026-11-11',scope:'Convenio Multilateral'},
+    references:[{label:'SIFERE · calendario oficial',url:'https://www.ca.gob.ar/sifere'}]
+  },
+  {
+    id:'arca-5903-precios-transferencia',category:'impositivo',jurisdictions:['nacional'],
+    profiles:['precios-transferencia'],date:'2026-09-30',title:'Precios de transferencia: ARCA sustituye el régimen de operaciones internacionales',
+    summary:'La RG 5903/2026 actualiza la documentación y las declaraciones de operaciones internacionales en Ganancias para ejercicios iniciados desde el 1 de octubre de 2026.',
+    source:'Boletín Oficial · RG ARCA 5903/2026',url:'https://www.boletinoficial.gob.ar/detalleAviso/primera/348243/20260930',
+    mode:'editorial',importance:'alta',importanceReason:'Modifica el régimen de información y documentación.',
+    brief:{whatChanged:'La resolución regula métodos de análisis, documentación y presentaciones. Para prestaciones financieras, el estudio debe justificar la calificación crediticia usada y cómo incide en el precio.',
+      who:'Sujetos y operaciones internacionales comprendidos en los artículos 1 y 2 de la resolución.',
+      when:'Se publicó el 30 de septiembre de 2026 y aplica a ejercicios iniciados desde el 1 de octubre. Para los ejercicios anteriores siguen aplicando las resoluciones previas.',
+      action:'El estudio y el F. 2668, o el F. 2672 según el régimen, vencen en el séptimo mes posterior al cierre. El Informe Maestro o nota de ratificación, cuando corresponda, vence en el mes doce. El artículo 70 fija los días según CUIT.',
+      reviewedAt:'2026-11-11',scope:'Impuesto a las Ganancias · Argentina'},
+    references:[{label:'Infoleg · texto y anexos',url:'https://www.argentina.gob.ar/normativa/nacional/norma-430681/texto'}]
+  },
+  {
+    id:'caba-comarb-9-padron-federal',category:'impositivo',jurisdictions:['caba','interjurisdiccional'],
+    date:'2026-08-12',title:'Convenio Multilateral: CABA se incorpora al Padrón Federal',
+    summary:'Desde el 1 de agosto de 2026, los contribuyentes de Ingresos Brutos de Convenio Multilateral con sede en CABA están incorporados al Registro Único Tributario.',
+    source:'Comisión Arbitral · RG 9/2026',url:'https://www.ca.gob.ar/resoluciones-comarb/download/454-2026/8700-rg-09-ratifica-disposicion-de-presidencia-n-9-2026',
+    mode:'editorial',
+    brief:{who:'Contribuyentes de Convenio Multilateral con jurisdicción sede en CABA.',
+      when:'La incorporación se aplica desde el 1 de agosto de 2026. La Comisión Arbitral la ratificó el 12 de agosto.',
+      action:'Usá el Registro Único Tributario en ARCA para los trámites registrales incluidos, como altas, bajas y modificaciones.',
+      reviewedAt:'2026-11-11',scope:'Convenio Multilateral · sede CABA'},
+    references:[{label:'Comisión Arbitral · Padrón Federal',url:'https://www.ca.gob.ar/sistemas/padron-federal'}]
+  },
+  {
+    id:'bcra-inversion-extranjera-segundo-trimestre-2026',category:'economia',jurisdictions:['nacional'],
+    date:'2026-11-05',title:'BCRA: la cancelación de deuda comercial explicó la mayor parte de las salidas netas de IED',
+    summary:'El BCRA informó egresos netos de inversión extranjera directa por USD 1.820 millones en el segundo trimestre de 2026. El principal factor fue la cancelación de deuda comercial entre vinculadas.',
+    source:'BCRA · Informe de inversión extranjera directa',url:'https://www.bcra.gob.ar/publicaciones/informe-sobre-inversion-extranjera-directa-segundo-trimestre-2026/',
+    mode:'editorial'
+  },
+  {
     id:'casas-particulares-noviembre-2026',
     category:'laboral',
     date:'2026-11-10',
@@ -146,6 +216,14 @@ export const editoriales = [
   }
 ];
 export const archivo = [
+  {id:'caba-auditoria-rt-37',category:'contable',jurisdictions:['caba'],profiles:['auditoria'],date:'2025-04-01',
+    title:'Auditoría en CABA: qué fecha define la aplicación de la RT 37 modificada',
+    summary:'Para informes de auditoría emitidos desde el 1 de abril de 2025, el Consejo de CABA exige la RT 37 modificada por la RT 53. La fecha del informe es la referencia indicada por la Res. M.D. 13/2025.',
+    source:'Consejo de CABA · RT 37',url:'https://www.consejo.org.ar/micrositios-profesionales/rt-37-nueva-version',mode:'archivo'},
+  {id:'caba-rt-54-adopcion',category:'contable',jurisdictions:['caba'],date:'2025-01-01',
+    title:'RT 54 en CABA: desde qué ejercicios se aplica la Norma Unificada',
+    summary:'El Consejo de CABA indica que la aplicación es obligatoria para ejercicios iniciados desde el 1 de enero de 2025. Exceptúa los períodos intermedios del primer ejercicio y reúne el texto actualizado y modelos de estados contables.',
+    source:'Consejo de CABA · RT 54',url:'https://www.consejo.org.ar/micrositios-profesionales/rt-54-norma-unificada-argentina-de-contabilidad',mode:'archivo'},
   {id:'decreto-953-2024',category:'impositivo',date:'2024-10-25',title:'De AFIP a ARCA: qué dice el decreto de creación',summary:'El Decreto 953/2024 disolvió la AFIP y creó ARCA como su continuadora jurídica. La ficha enlaza al texto original; para trámites actuales, consultá también las disposiciones posteriores.',source:'Infoleg · Argentina.gob.ar',url:'https://www.argentina.gob.ar/normativa/nacional/decreto-953-2024-405666/texto',mode:'archivo'},
   {id:'ley-27743',category:'impositivo',date:'2024-07-08',title:'Ley 27.743: medidas fiscales en el texto original',summary:'La ley reúne medidas sobre regularización, bienes personales, ganancias y monotributo. Esta entrada es histórica: no indica que sus plazos sigan abiertos.',source:'Infoleg · Argentina.gob.ar',url:'https://www.argentina.gob.ar/normativa/nacional/ley-27743-401268/texto',mode:'archivo'},
   {id:'rt-54',category:'contable',date:'2022-07-01',title:'RT 54: el punto de partida de la Norma Unificada Argentina',summary:'La FACPCE publicó la resolución técnica original. Para aplicarla a un cierre, verificá el texto actualizado y las resoluciones de adopción del consejo profesional correspondiente.',source:'FACPCE · texto original',url:'https://www.facpce.org.ar/wp-content/uploads/2022/07/RT54.pdf',mode:'archivo',datePrecision:'month'},

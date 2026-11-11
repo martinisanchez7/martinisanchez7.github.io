@@ -58,10 +58,12 @@
               <option value="contable">Contable</option><option value="laboral">Laboral</option>
               <option value="economia">Economía y finanzas</option><option value="internacional">Mercados internacionales</option>
             </select></label>
+            <label>Jurisdicción<select name="jurisdiction"><option value="">Todas</option></select></label>
+            <label>Sector de trabajo<select name="profile"><option value="">Todos los sectores</option></select></label>
             <button type="submit">Activar aviso diario</button>
           </form>
           <button id="avisos-baja" type="button" hidden>Desactivar aviso</button>
-          <p class="avisos-nota">Para enviar el aviso, guardamos la suscripción del navegador, la hora y la sección elegidas. Podés eliminar la suscripción con «Desactivar aviso».</p>
+          <p class="avisos-nota">El aviso resume una ficha reciente de tu selección. Guardamos la suscripción y tus preferencias de envío. Podés borrarlas con «Desactivar aviso».</p>
         </details>
       </section>
       <section id="boletin" aria-labelledby="boletin-title">
@@ -78,7 +80,15 @@
           <input type="hidden" name="categoria" value="">
           <div class="fields">
             <label>Buscar<input name="q" type="search" maxlength="100" placeholder="Ganancias, casas particulares, RT 54"></label>
-            <button>Buscar</button>
+            <label>Jurisdicción<select name="jurisdiccion"><option value="">Todas</option></select></label>
+            <label>Ordenar por<select name="orden">
+              <option value="recientes">Más recientes</option><option value="relevantes">Relevantes</option>
+              <option value="perfil">Según tu perfil</option>
+            </select></label>
+            <label id="sector-filtro" hidden>¿En qué sector trabajás?
+              <select name="perfil" disabled><option value="">Elegí tu sector</option></select>
+            </label>
+            <button>Aplicar filtros</button>
           </div>
           <details class="advanced">
             <summary>Más filtros</summary>

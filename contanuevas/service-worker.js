@@ -10,6 +10,7 @@ self.addEventListener('fetch',event=>{
 });
 
 const sections=new Set(['impositivo','contable','laboral','economia','internacional']);
+const slug=value=>typeof value==='string' && /^[a-z0-9-]{1,100}$/.test(value)?value:'';
 self.addEventListener('push',event=>{
   let message;
   try {message=event.data?.json();} catch {}
@@ -20,14 +21,26 @@ self.addEventListener('push',event=>{
       body:typeof message?.body==='string'?message.body.slice(0,200):'Ya podés consultar el boletín de hoy.',
       icon:'/app-192.png',
       tag:'contanuevas-diario',
-      data:{category}
+      data:{category,itemId:slug(message?.itemId),jurisdiction:slug(message?.jurisdiction),profile:slug(message?.profile)}
     }
   ));
 });
 
 self.addEventListener('notificationclick',event=>{
   event.notification.close();
-  const category=event.notification.data?.category;
-  const path=sections.has(category)?'/?'+new URLSearchParams({categoria:category})+'#boletin':'/';
+  const {category,itemId,jurisdiction,profile}=event.notification.data??{};
+  const params=new URLSearchParams();
+  if(slug(itemId)) {
+    params.set('q',itemId);
+    params.set('modo','todos');
+  } else {
+    if(sections.has(category)) params.set('categoria',category);
+    if(slug(jurisdiction)) params.set('jurisdiccion',jurisdiction);
+    if(slug(profile)) {
+      params.set('orden','perfil');
+      params.set('perfil',profile);
+    }
+  }
+  const path='/' + (params.size?'?'+params:'')+'#boletin';
   event.waitUntil(self.clients.openWindow(new URL(path,self.location.origin).href));
 });

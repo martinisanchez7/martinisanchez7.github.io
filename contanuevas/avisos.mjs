@@ -1,4 +1,6 @@
 import { categorias } from './datos.mjs';
+import { ambitos, perfiles } from './criterios.js';
+import { boletinSnapshotKey, DAY, seleccionarAviso } from './api.mjs';
 import { b64, fromB64, hash, pushEndpoint, pushKeys, deliverPush } from './webpush.mjs';
 
 const hourPattern = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -54,8 +56,9 @@ async function validSubscription(value) {
 }
 
 export class AvisosDiarios {
-  constructor(state) {
+  constructor(state, env) {
     this.state=state;
+    this.boletin=env?.BOLETIN;
     this.sql=state.storage.sql;
     this.sql.exec(`CREATE TABLE IF NOT EXISTS suscripciones (
       id TEXT PRIMARY KEY, token_hash TEXT NOT NULL, subscription TEXT NOT NULL,
@@ -63,6 +66,10 @@ export class AvisosDiarios {
       revision TEXT NOT NULL, retries INTEGER NOT NULL DEFAULT 0,
       failures INTEGER NOT NULL DEFAULT 0
     )`);
+    const columns=new Set(this.sql.exec('PRAGMA table_info(suscripciones)').toArray().map(row=>row.name));
+    for(const name of ['jurisdiction','profile','last_item']) {
+      if(!columns.has(name)) this.sql.exec(`ALTER TABLE suscripciones ADD COLUMN ${name} TEXT NOT NULL DEFAULT ''`);
+    }
     this.sql.exec('CREATE INDEX IF NOT EXISTS suscripciones_proxima ON suscripciones(next_at)');
     this.ready=state.blockConcurrencyWhile(async()=>{
       this.vapid=await state.storage.get('vapid-v1');
@@ -96,10 +103,12 @@ export class AvisosDiarios {
     }
     let input;
     try {input=await requestBody(request);} catch {return reply({error:'Solicitud inválida'},400);}
-    const {hour,category}=input??{};
+    const {hour,category,jurisdiction='',profile=''}=input??{};
     const subscription=await validSubscription(input?.subscription);
-    if(!subscription || typeof hour!=='string' || !hourPattern.test(hour) || typeof category!=='string' || !(category===''||categorias.includes(category))) {
-      return reply({error:'Revisá el horario, la sección y los permisos del dispositivo'},400);
+    if(!subscription || typeof hour!=='string' || !hourPattern.test(hour) || !(category===''||categorias.includes(category))
+      || typeof jurisdiction!=='string' || jurisdiction && !Object.hasOwn(ambitos,jurisdiction)
+      || typeof profile!=='string' || profile && !Object.hasOwn(perfiles,profile)) {
+      return reply({error:'Revisá el horario, la sección, la jurisdicción, el perfil y los permisos del dispositivo'},400);
     }
     const id=await hash(subscription.endpoint);
     const saved=this.sql.exec('SELECT token_hash FROM suscripciones WHERE id=?',id).toArray()[0];
@@ -115,16 +124,16 @@ export class AvisosDiarios {
         const count=this.sql.exec('SELECT COUNT(*) AS n FROM suscripciones').one().n;
         if(!saved && count>=maxSubscriptions) throw Error('Capacidad');
         if(saved) {
-          this.sql.exec('UPDATE suscripciones SET subscription=?, hour=?, category=?, next_at=?, revision=?, retries=0, failures=0 WHERE id=? AND token_hash=?',
-            JSON.stringify(subscription),hour,category,next,revision,id,tokenHash);
+          this.sql.exec('UPDATE suscripciones SET subscription=?, hour=?, category=?, jurisdiction=?, profile=?, next_at=?, revision=?, retries=0, failures=0 WHERE id=? AND token_hash=?',
+            JSON.stringify(subscription),hour,category,jurisdiction,profile,next,revision,id,tokenHash);
         } else {
-          this.sql.exec('INSERT INTO suscripciones (id,token_hash,subscription,hour,category,next_at,revision) VALUES (?,?,?,?,?,?,?)',
-            id,tokenHash,JSON.stringify(subscription),hour,category,next,revision);
+          this.sql.exec('INSERT INTO suscripciones (id,token_hash,subscription,hour,category,jurisdiction,profile,next_at,revision) VALUES (?,?,?,?,?,?,?,?,?)',
+            id,tokenHash,JSON.stringify(subscription),hour,category,jurisdiction,profile,next,revision);
         }
       });
     } catch {return reply({error:'No pudimos guardar el aviso ahora. Volvé a intentar.'},503);}
     await this.schedule();
-    return reply({enabled:true,credential:id+'.'+token,hour,category,nextAt:new Date(next).toISOString()});
+    return reply({enabled:true,credential:id+'.'+token,hour,category,jurisdiction,profile,nextAt:new Date(next).toISOString()});
   }
 
   async alarm() {
@@ -133,22 +142,31 @@ export class AvisosDiarios {
     const due=this.sql.exec('SELECT * FROM suscripciones WHERE next_at<=? ORDER BY next_at LIMIT 15',now).toArray();
     // Keep a future alarm even if the current invocation ends during a push request.
     await this.state.storage.setAlarm(now+60_000);
+    const snapshot=due.length?await this.boletin?.get(boletinSnapshotKey,'json').catch(()=>null):null;
+    const today=localClock.format(now);
+    const yesterday=localClock.format(now-DAY);
+    const items=snapshot?.items??[];
+    const summaries=snapshot?.summaries??[];
     for(const row of due) {
       const next=nextDelivery(row.hour,now);
       const moved=this.sql.exec('UPDATE suscripciones SET next_at=?, retries=0 WHERE id=? AND revision=? AND next_at=?',
         next,row.id,row.revision,row.next_at).rowsWritten;
       if(!moved || now-row.next_at>3_600_000) continue;
       let status=0;
+      let item;
       try {
-        const label=sections[row.category];
+        item=seleccionarAviso(items,summaries,row,yesterday,today);
+        const label=perfiles[row.profile]??sections[row.category];
+        const body=item?.summary;
         status=await deliverPush(JSON.parse(row.subscription),{
-          title:label?'Contanuevas · '+label:'Contanuevas',
-          body:label?'Ya podés consultar el boletín de '+label+'.':'Ya podés consultar el boletín de hoy.',
-          category:row.category
-        },this.vapid,'boletin-'+localClock.format(now));
+          title:item?.title??(label?'Contanuevas · '+label:'Contanuevas'),
+          body:body?.length>190?body.slice(0,188).replace(/\s+\S*$/,'')+'…':body
+            ?? (snapshot?'Por ahora no hay fichas nuevas con resumen para tu selección.':'Abrí el boletín para consultar tu selección.'),
+          itemId:item?.id, category:row.category, jurisdiction:row.jurisdiction, profile:row.profile
+        },this.vapid,'boletin-'+today);
       } catch { /* Errors are handled without recording endpoints or credentials. */ }
       if([404,410].includes(status)) this.sql.exec('DELETE FROM suscripciones WHERE id=? AND revision=?',row.id,row.revision);
-      else if(status>=200 && status<300) this.sql.exec('UPDATE suscripciones SET failures=0 WHERE id=? AND revision=?',row.id,row.revision);
+      else if(status>=200 && status<300) this.sql.exec('UPDATE suscripciones SET failures=0, last_item=? WHERE id=? AND revision=?',item?.id??row.last_item,row.id,row.revision);
       else if((status===0 || status===429 || status>=500) && row.retries===0) {
         this.sql.exec('UPDATE suscripciones SET next_at=?, retries=1 WHERE id=? AND revision=?',now+600_000,row.id,row.revision);
       } else if(row.failures>=6) this.sql.exec('DELETE FROM suscripciones WHERE id=? AND revision=?',row.id,row.revision);

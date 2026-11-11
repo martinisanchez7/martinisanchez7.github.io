@@ -30,12 +30,16 @@ El contrato para importar en clientes de API está en `openapi.json`.
 
 | Ruta | Respuesta |
 | --- | --- |
-| `GET /api/v1/novedades` | Listado. `categoria`, `q`, `modo`, `desde`, `hasta`, `limite` (1–100) y `desde_fila` (desplazamiento desde cero). |
+| `GET /api/v1/novedades` | Listado con filtros por categoría, jurisdicción, perfil, fecha, prioridad, respaldo y fuente. Incluye paginación. |
 | `GET /api/v1/novedades/{id}` | Ficha única o `404`. |
 | `GET /api/v1/fuentes` | Catálogo con el rol de cada fuente. |
 | `GET /api/v1/salud` | Modo, último intento, estado por fuente y total de fichas. |
 
 Ejemplo: `http://127.0.0.1:4195/api/v1/novedades?categoria=contable&modo=archivo`. Las fechas exactas se consultan como `AAAA-MM-DD`; `datePrecision` permite distinguir fechas de referencia mensuales. Se devuelve `400` ante filtros inválidos. El cliente no puede pedir URLs de ingestión ni disparar una descarga remota.
+
+Para ver novedades impositivas de CABA por prioridad, usá `?categoria=impositivo&jurisdiccion=caba&orden=relevantes`. Para auditoría local, usá `?jurisdiccion=caba&orden=perfil&perfil=auditoria`. Cada ficha puede tener más de un alcance. Las fichas de prensa sin alcance confirmado quedan pendientes de clasificación.
+
+Los avisos en el Worker respetan la hora argentina, la sección, el alcance y el sector elegidos. Priorizan una ficha revisada o una síntesis oficial del día o del día anterior y enlazan a su detalle. Si el filtro queda sin coincidencias, el aviso indica que no hay fichas nuevas con resumen.
 
 Antes de producción: almacenamiento compartido si hay más de una instancia, programación con alertas, revisión humana de fichas, prueba visual del alojamiento, permisos de fuentes comerciales y revisión de dominio/HTTPS. La publicación de Instagram queda para después de aprobar la primera edición.
 

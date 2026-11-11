@@ -1,6 +1,10 @@
+import { ambitos, perfiles, cargarOpciones } from './criterios.js';
+
 const install=document.querySelector('#instalar-app');
 const instructions=document.querySelector('#instrucciones-app');
 const form=document.querySelector('#avisos-form');
+cargarOpciones(form.elements.jurisdiction,ambitos);
+cargarOpciones(form.elements.profile,perfiles);
 const state=document.querySelector('#avisos-estado');
 const stop=document.querySelector('#avisos-baja');
 const storageKey='contanuevas-aviso-v1';
@@ -51,6 +55,8 @@ function showSettings() {
   if(!local?.credential) return;
   form.elements.hour.value=local.hour;
   form.elements.category.value=local.category;
+  form.elements.jurisdiction.value=local.jurisdiction??'';
+  form.elements.profile.value=local.profile??'';
   state.textContent='Aviso programado a las '+local.hour+' (hora argentina).';
 }
 
@@ -76,12 +82,16 @@ async function initialize() {
     await navigator.serviceWorker.register('/service-worker.js');
     registration=await navigator.serviceWorker.ready;
     if(!local?.credential) {
-      const category=new URLSearchParams(location.search).get('categoria');
-      if([...form.elements.category.options].some(option=>option.value===category)) form.elements.category.value=category;
+      const params=new URLSearchParams(location.search);
+      for(const [control,param] of [['category','categoria'],['jurisdiction','jurisdiccion'],['profile','perfil']]) {
+        const select=form.elements[control];
+        const value=params.get(param);
+        if([...select.options].some(option=>option.value===value)) select.value=value;
+      }
     }
     showSettings();
     form.hidden=false;
-    if(!local?.credential) state.textContent='Elegí una hora y la sección de tu interés.';
+    if(!local?.credential) state.textContent='Elegí a qué hora querés recibir el aviso y qué novedades te interesan.';
   } catch {
     state.textContent='Los avisos no están disponibles en este momento.';
   } finally {initializing=false;}
@@ -92,6 +102,8 @@ form.addEventListener('submit',async event=>{
   if(busy || !registration || !config || !form.reportValidity()) return;
   const hour=form.elements.hour.value;
   const category=form.elements.category.value;
+  const jurisdiction=form.elements.jurisdiction.value;
+  const profile=form.elements.profile.value;
   setBusy(true);
   let created;
   try {
@@ -112,11 +124,12 @@ form.addEventListener('submit',async event=>{
     const headers={'Content-Type':'application/json'};
     if(local?.credential) headers.Authorization='Bearer '+local.credential;
     const response=await fetch('/api/v1/avisos',{
-      method:'POST',headers,body:JSON.stringify({hour,category,subscription:subscription.toJSON()})
+      method:'POST',headers,body:JSON.stringify({hour,category,jurisdiction,profile,subscription:subscription.toJSON()})
     });
     const saved=await response.json();
     if(!response.ok) throw Error(saved.error??'No se pudo programar el aviso.');
-    local={credential:saved.credential,hour:saved.hour,category:saved.category};
+    local={credential:saved.credential,hour:saved.hour,category:saved.category,
+      jurisdiction:saved.jurisdiction??'',profile:saved.profile??''};
     localStorage.setItem(storageKey,JSON.stringify(local));
     showSettings();
   } catch(error) {
@@ -149,3 +162,4 @@ panel.addEventListener('toggle',()=>{
 });
 if(location.hash==='#avisos') panel.open=true;
 addEventListener('hashchange',()=>{if(location.hash==='#avisos') panel.open=true;});
+

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Contanuevas",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "description": "Boletín con alertas pendientes de cotejo y resúmenes normativos revisados. El respaldo de la fuente y la prioridad temática se informan por separado."
   },
   "servers": [
@@ -121,6 +121,76 @@
               "type": "string"
             },
             "description": "ID del catálogo de fuentes"
+          },
+          {
+            "name": "jurisdiccion",
+            "in": "query",
+            "description": "Alcance de la ficha. provincial reúne las provincias. CABA y Convenio Multilateral tienen sus propios filtros.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "provincial",
+                "nacional",
+                "caba",
+                "interjurisdiccional",
+                "internacional",
+                "buenos-aires",
+                "catamarca",
+                "chaco",
+                "chubut",
+                "cordoba",
+                "corrientes",
+                "entre-rios",
+                "formosa",
+                "jujuy",
+                "la-pampa",
+                "la-rioja",
+                "mendoza",
+                "misiones",
+                "neuquen",
+                "rio-negro",
+                "salta",
+                "san-juan",
+                "san-luis",
+                "santa-cruz",
+                "santa-fe",
+                "santiago-del-estero",
+                "tierra-del-fuego",
+                "tucuman",
+                "sin-clasificar"
+              ]
+            }
+          },
+          {
+            "name": "orden",
+            "in": "query",
+            "description": "Orden por fecha, prioridad temática o perfil. El valor perfil requiere indicar también el parámetro perfil. La prioridad se desempata por fecha.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "recientes",
+                "relevantes",
+                "perfil"
+              ],
+              "default": "recientes"
+            }
+          },
+          {
+            "name": "perfil",
+            "in": "query",
+            "description": "Filtra por sector profesional. Otros conserva todas las fichas que coinciden con los demás filtros.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "impuestos",
+                "payroll",
+                "contabilidad",
+                "auditoria",
+                "finanzas",
+                "precios-transferencia",
+                "otros"
+              ]
+            }
           }
         ],
         "responses": {
@@ -264,7 +334,9 @@
           "date",
           "source",
           "url",
-          "mode"
+          "mode",
+          "jurisdictions",
+          "profiles"
         ],
         "properties": {
           "id": {
@@ -459,6 +531,57 @@
           "summaryId": {
             "type": "string",
             "description": "ID de la síntesis automática vinculada al aviso oficial."
+          },
+          "jurisdictions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "nacional",
+                "caba",
+                "interjurisdiccional",
+                "internacional",
+                "buenos-aires",
+                "catamarca",
+                "chaco",
+                "chubut",
+                "cordoba",
+                "corrientes",
+                "entre-rios",
+                "formosa",
+                "jujuy",
+                "la-pampa",
+                "la-rioja",
+                "mendoza",
+                "misiones",
+                "neuquen",
+                "rio-negro",
+                "salta",
+                "san-juan",
+                "san-luis",
+                "santa-cruz",
+                "santa-fe",
+                "santiago-del-estero",
+                "tierra-del-fuego",
+                "tucuman",
+                "sin-clasificar"
+              ]
+            }
+          },
+          "profiles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "impuestos",
+                "payroll",
+                "contabilidad",
+                "auditoria",
+                "finanzas",
+                "precios-transferencia"
+              ]
+            }
           }
         }
       }

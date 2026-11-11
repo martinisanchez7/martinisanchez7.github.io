@@ -1,4 +1,5 @@
 import { receiptView } from './simulador.js';
+import { ambitos, jurisdicciones, perfiles, cargarOpciones } from './criterios.js';
 
 const form = document.querySelector('#filtros');
 const list = document.querySelector('#entradas');
@@ -9,7 +10,21 @@ const navigation = document.querySelector('#navegacion');
 const sections = document.querySelector('#secciones');
 const apiLink = document.querySelector('#api-novedades');
 const menu = document.querySelector('.menu-toggle');
-const filters = ['q','categoria','modo','respaldo','importancia','desde','hasta'];
+
+const filters = ['q','categoria','modo','respaldo','importancia','desde','hasta','jurisdiccion','orden','perfil'];
+const sector = document.querySelector('#sector-filtro');
+cargarOpciones(form.elements.jurisdiccion,ambitos);
+cargarOpciones(form.elements.perfil,perfiles);
+let savedProfile='';
+try {savedProfile=localStorage.getItem('contanuevas-perfil')??'';} catch {}
+
+function showProfile() {
+  const enabled=form.elements.orden.value==='perfil';
+  sector.hidden=!enabled;
+  form.elements.perfil.disabled=!enabled;
+  form.elements.perfil.required=enabled;
+  if(enabled && !form.elements.perfil.value) form.elements.perfil.value=savedProfile;
+}
 const categories = {impositivo:'Impositivo',contable:'Contable',laboral:'Laboral',internacional:'Mercados internacionales',economia:'Economía y finanzas'};
 const modes = {resumen:'Resúmenes',todos:'Boletín',editorial:'Resúmenes revisados',sintesis:'Síntesis automáticas',automatico:'Alertas de fuentes',archivo:'Archivo'};
 const types = {editorial:'Resumen revisado',sintesis:'Síntesis automática',automatico:'Alerta',archivo:'Documento histórico'};
@@ -66,7 +81,8 @@ function renderItem(item) {
   const article = element('article');
   const meta = element('div','','meta');
   meta.append(element('b',categories[item.category]),document.createTextNode(
-    ' · '+item.date+(item.importance==='alta'?' · Prioridad alta':'')
+    ' · '+(item.jurisdictions??[]).map(code=>jurisdicciones[code]).join(' / ')+' · '+item.date
+      +(item.importance==='alta'?' · Prioridad alta':'')
   ));
   const kind = item.reviewedId?'Resumen revisado disponible':item.summaryId?'Síntesis disponible':types[item.mode];
   article.append(meta,element('h3',item.title),element('p',kind+' · '+(tiers[item.sourceTier]??'Respaldo sin clasificar'),'respaldo'));
@@ -111,10 +127,12 @@ function renderItem(item) {
 function restoreFilters() {
   const params = new URLSearchParams(location.search);
   const validCategory = Object.hasOwn(categories,params.get('categoria'));
-  const defaultMode = validCategory?'todos':'resumen';
+  const defaultMode = validCategory || params.get('orden')==='perfil'?'todos':'resumen';
   for(const name of filters) form.elements.namedItem(name).value = params.get(name)??(name==='modo'?defaultMode:'');
   if(!Object.hasOwn(categories,form.elements.categoria.value)) form.elements.categoria.value = '';
   if(!form.elements.modo.value) form.elements.modo.value = 'resumen';
+  if(!form.elements.orden.value) form.elements.orden.value='recientes';
+  showProfile();
   document.querySelector('.advanced').open = ['desde','hasta','respaldo','importancia'].some(name=>params.has(name))
     || ['todos','editorial','sintesis'].includes(params.get('modo'));
 }
@@ -122,6 +140,8 @@ function restoreFilters() {
 function formFilters() {
   const params = new URLSearchParams();
   for(const [name,value] of new FormData(form)) if(value.trim()) params.set(name,value.trim());
+  if(params.get('orden')==='recientes') params.delete('orden');
+  if(!params.has('perfil') && params.get('orden')==='perfil') params.delete('orden');
   return params;
 }
 
@@ -137,6 +157,7 @@ function syncNavigation() {
     if(['resumen','automatico','archivo'].includes(link.dataset.view)) {
       const params = new URLSearchParams({modo:link.dataset.view});
       if(category) params.set('categoria',category);
+      for(const name of ['jurisdiccion','orden','perfil']) if(applied.has(name)) params.set(name,applied.get(name));
       link.href = '/?'+params+'#boletin';
     }
   }
@@ -151,7 +172,9 @@ function syncNavigation() {
     if(next===category) link.setAttribute('aria-current','true');
     else link.removeAttribute('aria-current');
   }
-  apiLink.href = '/api/v1/novedades'+(category?'?'+new URLSearchParams({categoria:category}):'');
+  const params=new URLSearchParams(applied);
+  if(params.get('modo')==='todos') params.delete('modo');
+  apiLink.href='/api/v1/novedades'+(params.size?'?'+params:'');
 }
 
 function openAnchor() {
@@ -202,10 +225,11 @@ async function load(append=false) {
     more.hidden = offset>=data.total;
     if(!data.total) {
       const message = element('p','No hay fichas con esos filtros. ');
-      const category = applied.get('categoria');
-      if(category && applied.get('modo')!=='todos') {
-        const link = element('a','Ver todas las fichas de esta sección');
-        link.href = '/?'+new URLSearchParams({modo:'todos',categoria:category})+'#boletin';
+      if(applied.get('modo')!=='todos') {
+        const link = element('a','Buscar también en alertas y archivo');
+        const broader=new URLSearchParams(applied);
+        broader.set('modo','todos');
+        link.href = '/?'+broader+'#boletin';
         message.append(link);
       } else message.append('Probá otra sección o ajustá los filtros.');
       list.append(message);
@@ -221,8 +245,16 @@ async function load(append=false) {
   }
 }
 
+form.elements.orden.addEventListener('change',()=>{
+  showProfile();
+  if(form.elements.orden.value==='perfil' && form.elements.modo.value==='resumen') form.elements.modo.value='todos';
+});
 form.addEventListener('submit',event=>{
   event.preventDefault();
+  if(form.elements.orden.value==='perfil') {
+    savedProfile=form.elements.perfil.value;
+    try {localStorage.setItem('contanuevas-perfil',savedProfile);} catch {}
+  }
   const target = '/?'+formFilters()+'#boletin';
   if(target!==location.pathname+location.search+location.hash) history.pushState(null,'',target);
   load().then(openAnchor);

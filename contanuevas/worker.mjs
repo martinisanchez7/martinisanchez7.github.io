@@ -1,13 +1,12 @@
-import { mergeItems, rutaDeApi, security, serveApi, updateStatus } from './api.mjs';
+import { boletinSnapshotKey as snapshotKey, mergeItems, rutaDeApi, security, serveApi, updateStatus } from './api.mjs';
 import { refresh, sourceIds } from './fuentes.mjs';
 import { compileSummaries } from './sintesis.mjs';
 export { AvisosDiarios } from './avisos.mjs';
 
-const snapshotKey = 'boletin-v1';
 const coverageVersion = 5;
 const readCache = new WeakMap();
 const publicFiles = new Set(['/','/index.html','/estilo.css','/app.js','/simulador.js','/marca.svg','/icono.svg','/serif.woff2','/sans.woff2','/openapi.json',
-  '/instalar.js','/manifest.webmanifest','/service-worker.js','/app-192.png','/app-512.png']);
+  '/instalar.js','/criterios.js','/manifest.webmanifest','/service-worker.js','/app-192.png','/app-512.png']);
 const localTtl = 15_000;
 const empty = () => ({
   health: { product:'contanuevas', mode:'conectado', lastAttempt:null, sources:[], cache:'sin-copia' },
