@@ -6,7 +6,8 @@ import { DAY, RETRY, security, mergeItems, serveApi, updateStatus } from './api.
 import { compileSummaries } from './sintesis.mjs';
 
 const files = new Map([['/','index.html'],['/estilo.css','estilo.css'],['/app.js','app.js'],['/simulador.js','simulador.js'],['/marca.svg','marca.svg'],['/icono.svg','icono.svg'],['/serif.woff2','serif.woff2'],['/sans.woff2','sans.woff2'],['/openapi.json','openapi.json']]);
-const types = {html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',svg:'image/svg+xml',woff2:'font/woff2',json:'application/json; charset=utf-8'};
+for(const file of ['instalar.js','manifest.webmanifest','service-worker.js','app-192.png','app-512.png']) files.set('/'+file,file);
+const types = {html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',svg:'image/svg+xml',woff2:'font/woff2',json:'application/json; charset=utf-8',webmanifest:'application/manifest+json',png:'image/png'};
 export function createApp({live=false, update, cacheFile, compile=compileSummaries}={}) {
   let current = [];
   let summaries = [];

@@ -7,9 +7,12 @@
   <meta name="theme-color" content="#122333">
   <title>Contanuevas · Boletín normativo</title>
   <link rel="icon" href="/icono.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/app-192.png">
   <link rel="stylesheet" href="/estilo.css">
   <link rel="modulepreload" href="/simulador.js">
   <script type="module" src="/app.js"></script>
+  <script type="module" src="/instalar.js"></script>
 </head>
 <body>
   <a class="saltar" href="#boletin">Saltar al boletín</a>
@@ -39,6 +42,28 @@
         </div>
         <a class="estado" id="salud" href="#fuentes">Consultando fuentes…</a>
       </header>
+      <section id="avisos" class="app-panel" aria-label="App móvil y avisos">
+        <div class="app-panel-head">
+          <div><strong>Contanuevas en tu celular</strong><p>Accedé desde la pantalla de inicio y elegí cuándo recibir el aviso diario.</p></div>
+          <button id="instalar-app" type="button">Instalar app</button>
+        </div>
+        <p id="instrucciones-app" role="status" hidden></p>
+        <details id="avisos-panel">
+          <summary>Configurar aviso diario</summary>
+          <p id="avisos-estado" role="status">Comprobando disponibilidad…</p>
+          <form id="avisos-form" hidden>
+            <label>Hora argentina<input name="hour" type="time" value="09:00" required></label>
+            <label>Sección<select name="category">
+              <option value="">Todas</option><option value="impositivo">Impositivo</option>
+              <option value="contable">Contable</option><option value="laboral">Laboral</option>
+              <option value="economia">Economía y finanzas</option><option value="internacional">Mercados internacionales</option>
+            </select></label>
+            <button type="submit">Activar aviso diario</button>
+          </form>
+          <button id="avisos-baja" type="button" hidden>Desactivar aviso</button>
+          <p class="avisos-nota">Para enviar el aviso, guardamos la suscripción del navegador, la hora y la sección elegidas. Podés eliminar la suscripción con «Desactivar aviso».</p>
+        </details>
+      </section>
       <section id="boletin" aria-labelledby="boletin-title">
         <div class="section-head"><h2 id="boletin-title" tabindex="-1">Resúmenes</h2><p id="cantidad" role="status"></p></div>
         <nav id="secciones" aria-label="Secciones del boletín">

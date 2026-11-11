@@ -25,6 +25,13 @@ main{width:min(100%,1130px);padding:38px clamp(20px,5vw,76px) 20px}
 .edition{font-size:15px;font-weight:700;color:var(--copper)}
 .estado{margin-top:6px;border-bottom:1px solid var(--line);font-size:15px;white-space:nowrap}
 #boletin,#fuentes{scroll-margin-top:16px}
+.app-panel{margin:18px 0 0;padding:14px 16px;border:1px solid var(--line);background:var(--panel);scroll-margin-top:12px}
+.app-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px 16px}
+.app-panel p{margin:3px 0 8px;font-size:16px;color:var(--muted)}
+.app-panel details{padding-top:6px}
+#avisos-form:not([hidden]){display:grid;grid-template-columns:minmax(125px,.65fr) minmax(0,1fr) auto;gap:10px;align-items:end}
+#avisos-baja{margin-top:10px}
+.app-panel p.avisos-nota{margin-top:10px;font-size:15px}
 .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:15px}
 h2,h3{font-family:Georgia,'Times New Roman',serif;color:var(--ink);line-height:1.17}
 h2{font-size:34px;margin:25px 0 13px}
@@ -87,6 +94,8 @@ footer{font-size:15px;color:var(--muted);border-top:1px solid var(--line);paddin
   main{padding-top:22px}
 }
 @media(max-width:510px){
+  .app-panel-head{align-items:flex-start;flex-direction:column}
+  #avisos-form:not([hidden]){grid-template-columns:minmax(0,1fr)}
   .mast{display:block}
   .estado{display:inline-block;margin-top:10px}
   .fields{grid-template-columns:minmax(0,1fr) auto}

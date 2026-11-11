@@ -17,6 +17,15 @@
       "id": "708e9711a2c3401eb42fd6ca2fb31c78"
     }
   ],
+  "durable_objects": {
+    "bindings": [{ "name": "AVISOS", "class_name": "AvisosDiarios" }]
+  },
+  "migrations": [
+    { "tag": "avisos-v1", "new_sqlite_classes": ["AvisosDiarios"] }
+  ],
+  "ratelimits": [
+    { "name": "LIMITE_AVISOS", "namespace_id": "41111", "simple": { "limit": 8, "period": 60 } }
+  ],
   "triggers": {
     "crons": [
       "17 9-23 * * *"

@@ -1,11 +1,13 @@
 import { mergeItems, rutaDeApi, security, serveApi, updateStatus } from './api.mjs';
 import { refresh, sourceIds } from './fuentes.mjs';
 import { compileSummaries } from './sintesis.mjs';
+export { AvisosDiarios } from './avisos.mjs';
 
 const snapshotKey = 'boletin-v1';
 const coverageVersion = 5;
 const readCache = new WeakMap();
-const publicFiles = new Set(['/','/index.html','/estilo.css','/app.js','/simulador.js','/marca.svg','/icono.svg','/serif.woff2','/sans.woff2','/openapi.json']);
+const publicFiles = new Set(['/','/index.html','/estilo.css','/app.js','/simulador.js','/marca.svg','/icono.svg','/serif.woff2','/sans.woff2','/openapi.json',
+  '/instalar.js','/manifest.webmanifest','/service-worker.js','/app-192.png','/app-512.png']);
 const localTtl = 15_000;
 const empty = () => ({
   health: { product:'contanuevas', mode:'conectado', lastAttempt:null, sources:[], cache:'sin-copia' },
@@ -84,8 +86,27 @@ export default {
         status,headers:{...security,'Strict-Transport-Security':'max-age=15552000','Content-Type':type,
           ...(cachePublicData&&status===200?{'Cache-Control':'public, max-age=15, must-revalidate'}:{}),...extra}
       });
-    if(!['GET','HEAD'].includes(request.method)) return send(405,{error:'Método no permitido'},undefined,{Allow:'GET, HEAD'});
     if(url.pathname.length+url.search.length>2048) return send(400,{error:'Ruta inválida'});
+    if(url.pathname==='/api/v1/avisos' || url.pathname==='/api/v1/avisos/config') {
+      const config=url.pathname.endsWith('/config');
+      const methods=config?['GET']:['POST','DELETE'];
+      if(!methods.includes(request.method)) return send(405,{error:'Método no permitido'},undefined,{Allow:methods.join(', ')});
+      if(url.search) return send(400,{error:'Ruta inválida'});
+      if(!config && (request.headers.get('origin')!==url.origin || request.headers.get('sec-fetch-site')==='cross-site')) {
+        return send(403,{error:'Abrí la configuración desde Contanuevas'});
+      }
+      if(!env.AVISOS) return send(503,{error:'Avisos temporalmente no disponibles'});
+      if(!config && env.LIMITE_AVISOS) {
+        const ip=request.headers.get('CF-Connecting-IP')??'sin-ip';
+        if(!(await env.LIMITE_AVISOS.limit({key:ip})).success) return send(429,{error:'Esperá un minuto y volvé a intentar'});
+      }
+      try {
+        const stub=env.AVISOS.get(env.AVISOS.idFromName('avisos-contanuevas-v1'));
+        const response=await stub.fetch(request);
+        return send(response.status,await response.json());
+      } catch { return send(503,{error:'Avisos temporalmente no disponibles'}); }
+    }
+    if(!['GET','HEAD'].includes(request.method)) return send(405,{error:'Método no permitido'},undefined,{Allow:'GET, HEAD'});
     if(!url.pathname.startsWith('/api/')) {
       if(!publicFiles.has(url.pathname)) {
         return send(404,{error:'Ruta no encontrada'});
@@ -96,6 +117,7 @@ export default {
         if(name!=='Cache-Control' || asset.status>=400) headers.set(name,value);
       }
       headers.set('Strict-Transport-Security','max-age=15552000');
+      if(url.pathname==='/service-worker.js') headers.set('Cache-Control','no-cache');
       return new Response(request.method==='HEAD'?null:asset.body,{status:asset.status,headers});
     }
     if(!route) return send(404,{error:'Ruta no encontrada'});
