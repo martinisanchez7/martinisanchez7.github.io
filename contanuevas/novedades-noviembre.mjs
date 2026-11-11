@@ -111,6 +111,28 @@ export const ampliacionNoviembre = [
       reviewedAt:'2026-11-11',scope:'Procedimiento tributario · Argentina'}
   },
   {
+    id:'cnv-1175-prorroga-estados-financieros',category:'contable',jurisdictions:['nacional'],
+    profiles:['auditoria'],date:'2026-10-28',title:'CNV prorroga al 13 de noviembre la presentación de determinados estados financieros',
+    summary:'La RG CNV 1175 traslada al 13 de noviembre la presentación de estados anuales cerrados el 31 de agosto y de la información intermedia del trimestre cerrado el 30 de septiembre.',
+    source:'CNV · Resolución General 1175',sourceId:'cnv',mode:'editorial',
+    url:'https://www.argentina.gob.ar/noticias/se-prorroga-de-manera-excepcional-el-plazo-de-presentacion-de-estados-financieros-y-estados',
+    brief:{who:'Entidades supervisadas alcanzadas, y los equipos contables y de auditoría que preparan la documentación.',
+      when:'Hasta el 13 de noviembre de 2026 inclusive para los cierres indicados.',
+      action:'Incluí los estados o certificaciones intermedias según corresponda, más la documentación complementaria que se exige con cada presentación.',
+      reviewedAt:'2026-11-11',scope:'Mercado de capitales · Argentina'}
+  },
+  {
+    id:'neuquen-cpce-785-786-honorarios-auditoria',category:'contable',jurisdictions:['neuquen'],
+    profiles:['auditoria'],date:'2026-10-30',title:'Neuquén actualiza honorarios sugeridos y aranceles de legalización',
+    summary:'Las resoluciones 785 y 786 del Consejo de Neuquén actualizaron la escala sugerida y el arancel por control formal y legalización de actuaciones de auditoría y contabilidad.',
+    source:'Boletín Oficial de Neuquén · CPCE',mode:'editorial',
+    url:'https://boletinoficial.neuquen.gov.ar/BoletinDetalle?Id=1973',
+    brief:{who:'Profesionales con actuaciones de auditoría y contabilidad que se legalizan ante el Consejo de Neuquén.',
+      when:'Las resoluciones se publicaron el 30 de octubre de 2026. Los nuevos importes aplican desde el 2 de noviembre.',
+      action:'Consultá por separado la escala de honorarios de la Resolución 785 y el arancel de legalización de la 786.',
+      reviewedAt:'2026-11-11',scope:'Ejercicio profesional · Neuquén'}
+  },
+  {
     id:'facpce-indice-rt54-septiembre-2026',category:'contable',jurisdictions:['interjurisdiccional'],
     date:'2026-10-14',title:'FACPCE publica el índice de septiembre de 2026 para aplicar la RT 54',
     summary:'Ya está publicada la actualización mensual de la serie de la Resolución JG 539/18 para reexpresar estados contables en moneda homogénea.',

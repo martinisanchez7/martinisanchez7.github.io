@@ -5,6 +5,7 @@ import { provincias } from './criterios.js';
 const MAX_BYTES = 2 * 1024 * 1024;
 const TIMEOUT_MS = 8_000;
 const BORA = 'https://www.boletinoficial.gob.ar';
+const BORA_ALTERNO = 'https://nuevaweb.boletinoficial.gob.ar';
 const FED = 'https://www.federalreserve.gov';
 const CABA = 'https://api-restboletinoficial.buenosaires.gob.ar';
 const normalizar=value=>value.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
@@ -269,7 +270,18 @@ export async function refresh(fetcher = fetch, ids, { now=Date.now(), lookback=0
   const active=ids? sources.filter(source=>ids.includes(source.id)):sources;
   const fetchSource=async source => {
     try {
-      const items = source.parse(await download(fetcher, source));
+      let via;
+      const read=async url=>{
+        try {return source.parse(await download(fetcher,{...source,url}));}
+        catch(error) {
+          if(source.id!=='boletin-oficial' || !lookback) throw error;
+          const alternate=BORA_ALTERNO+new URL(url).pathname;
+          const items=source.parse(await download(fetcher,{...source,url:alternate}));
+          via='edicion-alterna-oficial';
+          return items;
+        }
+      };
+      const items = await read(source.url);
       let historicoIncompleto=0;
       const history=[];
       if(lookback && ['boletin-oficial','boletin-caba'].includes(source.id)) {
@@ -286,12 +298,12 @@ export async function refresh(fetcher = fetch, ids, { now=Date.now(), lookback=0
       }
       for(const {url,day} of history) {
         try {
-          const extra=source.parse(await download(fetcher,{...source,url}));
+          const extra=await read(url);
           items.push(...extra.filter(item=>!day || item.date===day));
         } catch { historicoIncompleto++; }
       }
       const found=unique(items).map(item=>({...item,sourceId:source.id}));
-      return {items:found,status:{id:source.id,ok:true,count:found.length,
+      return {items:found,status:{id:source.id,ok:true,count:found.length,...(via?{via}:{}),
         latest:found.reduce((day,item)=>item.date>day?item.date:day,''),historicoIncompleto}};
     } catch (error) {
       const message = error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'Tiempo de espera agotado' : 'No se pudo leer o validar la fuente';

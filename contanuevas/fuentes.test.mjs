@@ -50,6 +50,20 @@ test('refresh: combina ambas fuentes y conserva fecha descendente', async () => 
   assert.deepEqual(result.items.map(item => item.date), ['2026-11-10', '2026-11-10', '2026-11-09', '2026-11-09']);
 });
 
+test('El Boletín nacional usa su edición alterna oficial si falla la principal',async()=>{
+  const seen=[];
+  const result=await refresh(async url=>{
+    seen.push(url);
+    return url.startsWith('https://nuevaweb.boletinoficial.gob.ar/')
+      ?new Response(html,{headers:{'Content-Type':'text/html'}})
+      :new Response('Sin servicio',{status:503});
+  },['boletin-oficial'],{now:Date.parse('2026-11-11T18:17:00Z'),lookback:1});
+  assert.equal(result.status[0].via,'edicion-alterna-oficial');
+  assert.equal(result.status[0].ok,true);
+  assert.ok(seen.includes('https://nuevaweb.boletinoficial.gob.ar/seccion/primera/20261110'));
+  assert.ok(result.items.every(item=>item.url.startsWith('https://www.boletinoficial.gob.ar/')));
+});
+
 test('refresh: rechaza formato incorrecto y corta cuerpo excesivo', async () => {
   let cancelled = false;
   const stream = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array(2 * 1024 * 1024 + 1)); }, cancel() { cancelled = true; } });

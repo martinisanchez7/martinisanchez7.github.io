@@ -5,7 +5,7 @@ import { actualizarCierre, ultimoCierre } from './cotizacion.mjs';
 import relevamientoInicial from './relevamiento-inicial.json' with { type:'json' };
 export { AvisosDiarios } from './avisos.mjs';
 
-const coverageVersion = 7;
+const coverageVersion = 8;
 const readCache = new WeakMap();
 const publicFiles = new Set(['/','/index.html','/estilo.css','/app.js','/simulador.js','/marca.svg','/icono.svg','/serif.woff2','/sans.woff2','/openapi.json',
   '/instalar.js','/criterios.js','/manifest.webmanifest','/service-worker.js','/app-192.png','/app-512.png']);
@@ -70,8 +70,8 @@ export async function actualizar(kv, now = Date.now(), update, compile = compile
   catch { next = {items:[],status:[{id:'ingesta',ok:false,count:0}]}; }
   const items = mergeItems(previous.items,next.items);
   const sourcesById = new Map((retryIds?previous.health.sources:[]).map(source=>[source.id,source]));
-  for(const {id,ok,count,latest,historicoIncompleto} of next.status) {
-    sourcesById.set(id,{id,ok,count,latest:latest||sourcesById.get(id)?.latest||null,historicoIncompleto:historicoIncompleto??0});
+  for(const {id,ok,count,latest,historicoIncompleto,via} of next.status) {
+    sourcesById.set(id,{id,ok,count,latest:latest||sourcesById.get(id)?.latest||null,historicoIncompleto:historicoIncompleto??0,...(via?{via}:{})});
   }
   const sources = [...sourcesById.values()];
   let summaries=previous.summaries??[];

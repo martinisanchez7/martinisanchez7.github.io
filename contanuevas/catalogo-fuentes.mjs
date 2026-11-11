@@ -19,6 +19,7 @@ export const fuentes = [
   ['contadores-en-red','Contadores en Red · Provincias','https://contadoresenred.forumjuridicofiscal.com.ar/category/recorrido-por-provincias/','tecnico','Titulares fiscales provinciales. Verificar el texto de la norma','automatico','https://contadoresenred.forumjuridicofiscal.com.ar/category/recorrido-por-provincias/feed/'],
   ['ater','ATER','https://www.ater.gob.ar/','oficial','Normativa tributaria y planes de pago de Entre Ríos','manual'],
   ['atp-chaco','ATP Chaco','https://atp.chaco.gob.ar/','oficial','Resoluciones y calendarios tributarios de Chaco','manual'],
+  ['boletin-neuquen','Boletín Oficial de Neuquén','https://boletinoficial.neuquen.gov.ar/','oficial','Normas provinciales y resoluciones del Consejo Profesional','manual'],
   ['boletin-jujuy','Boletín Oficial de Jujuy · Rentas','https://boletinoficial.jujuy.gob.ar/?tag=d-p-r','oficial','Resoluciones generales de la Dirección Provincial de Rentas','automatico','https://boletinoficial.jujuy.gob.ar/?tag=d-p-r&feed=rss2'],
   ['agenfor','Agenfor','https://agenfor.com.ar/','oficial','Comunicados de la agencia de noticias del Gobierno de Formosa','manual'],
   ['cpcecaba','CPCECABA','https://www.consejo.org.ar/','tecnico','Adopción local, informes y herramientas profesionales','manual'],
