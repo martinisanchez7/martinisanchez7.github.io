@@ -40,7 +40,7 @@ Ejemplo: `http://127.0.0.1:4195/api/v1/novedades?categoria=contable&modo=archivo
 
 Para ver novedades impositivas de CABA por prioridad, usá `?categoria=impositivo&jurisdiccion=caba&orden=relevantes`. Para auditoría local, usá `?jurisdiccion=caba&orden=perfil&perfil=auditoria`. Cada ficha puede tener más de un alcance. Las fichas de prensa sin alcance confirmado quedan pendientes de clasificación.
 
-Los avisos en el Worker respetan la hora argentina, la sección, el alcance y el sector elegidos. Priorizan una ficha revisada o una síntesis oficial del día o del día anterior y enlazan a su detalle. Si el filtro queda sin coincidencias, el aviso indica que no hay fichas nuevas con resumen.
+Los avisos en el Worker respetan la hora argentina, la sección, el alcance y el sector elegidos. Seleccionan la ficha con resumen más reciente del día o del día anterior y enlazan a su detalle. Si el filtro queda sin coincidencias, el aviso indica que no hay fichas nuevas con resumen.
 
 La cobertura de los últimos 30 días informa fichas, resúmenes y última fecha por jurisdicción. Los titulares provinciales de Contadores en Red y las publicaciones profesionales de FACPCE y del Consejo de Córdoba se importan como alertas. Se consulta también el sumario oficial de CABA. Errepar se usa para orientar la revisión editorial de novedades públicas.
 

@@ -88,10 +88,10 @@ export function seleccionarAviso(items,summaries,{category,jurisdiction,profile,
   const matches=({card})=>card.id!==last_item && card.date>=from && card.date<=through
     && (!category || card.category===category) && coincideJurisdiccion(card,jurisdiction)
     && coincidePerfil(card,profile);
-  const {relevant}=catalogIndex(items,summaries);
-  const summary=relevant.find(row=>(row.card.mode==='editorial' || row.card.mode==='sintesis') && matches(row));
+  const {ordered}=catalogIndex(items,summaries);
+  const summary=ordered.find(row=>(row.card.mode==='editorial' || row.card.mode==='sintesis') && matches(row));
   if(summary) return summary.card;
-  return relevant.find(row=>row.card.sourceId==='boletin-caba' && row.card.mode==='automatico'
+  return ordered.find(row=>row.card.sourceId==='boletin-caba' && row.card.mode==='automatico'
     && !row.card.reviewedId && matches(row))?.card;
 }
 export function updateStatus(health,lastCompleted) {
@@ -165,7 +165,7 @@ export function serveApi({pathname,searchParams:p},send,health,items,lastComplet
     const page=[];
     let total=0;
     const index=catalogIndex(items,summaries);
-    for(const {card,searchable} of sort==='recientes'?index.ordered:index.relevant) {
+    for(const {card,searchable} of sort==='relevantes'?index.relevant:index.ordered) {
       if(respaldo && card.sourceTier!==respaldo || importancia && card.importance!==importancia || fuente && card.sourceId!==fuente) continue;
       if(category && card.category!==category || desde && card.date<desde || hasta && card.date>hasta) continue;
       if(!coincideJurisdiccion(card,jurisdiction) || !coincidePerfil(card,profile)) continue;

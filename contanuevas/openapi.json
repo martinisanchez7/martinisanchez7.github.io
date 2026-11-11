@@ -164,7 +164,7 @@
           {
             "name": "orden",
             "in": "query",
-            "description": "Orden por fecha, prioridad temática o perfil. El valor perfil requiere indicar también el parámetro perfil. La prioridad se desempata por fecha.",
+            "description": "Orden por fecha o por prioridad temática. El valor perfil requiere indicar también el parámetro perfil y ordena sus resultados por fecha.",
             "schema": {
               "type": "string",
               "enum": [

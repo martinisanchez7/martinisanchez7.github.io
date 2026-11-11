@@ -28,11 +28,6 @@
         <a href="/?modo=resumen&amp;categoria=laboral&amp;q=casas-particulares-noviembre-2026#simulador" data-view="simulador">Simulador</a>
         <a href="#fuentes" data-view="fuentes">Fuentes y estado</a>
       </nav>
-      <div class="sidebar-bottom">
-        <p>Para desarrolladores</p>
-        <a id="api-novedades" href="/api/v1/novedades">API JSON ↗</a>
-        <a href="/openapi.json">OpenAPI ↗</a>
-      </div>
     </aside>
     <main id="contenido">
       <section id="dolar" class="dolar" aria-label="Dólar oficial minorista al cierre" hidden>
@@ -46,7 +41,6 @@
           <h1>Contanuevas</h1>
           <p>Impuestos, contabilidad y trabajo. Qué cambió, desde cuándo y a quién alcanza.</p>
         </div>
-        <a class="estado" id="salud" href="#fuentes">Consultando fuentes…</a>
       </header>
       <section id="avisos" class="app-panel" aria-label="App móvil y avisos">
         <div class="app-panel-head">
@@ -88,7 +82,7 @@
             <label>Buscar<input name="q" type="search" maxlength="100" placeholder="Ganancias, casas particulares, RT 54"></label>
             <label>Jurisdicción<select name="jurisdiccion"><option value="">Todas</option></select></label>
             <label>Ordenar por<select name="orden">
-              <option value="recientes">Más recientes</option><option value="relevantes">Relevantes</option>
+              <option value="recientes">Más recientes</option>
               <option value="perfil">Según tu perfil</option>
             </select></label>
             <label id="sector-filtro" hidden>¿En qué sector trabajás?
@@ -101,11 +95,9 @@
             <div class="advanced-fields">
               <label>Contenido<select name="modo">
                 <option value="resumen">Resúmenes</option><option value="todos">Todo el boletín</option>
-                <option value="editorial">Revisados</option><option value="sintesis">Síntesis automáticas</option>
+                <option value="editorial">Resúmenes editoriales</option><option value="sintesis">Síntesis automáticas</option>
                 <option value="automatico">Alertas</option><option value="archivo">Archivo</option>
               </select></label>
-              <label>Respaldo<select name="respaldo"><option value="">Todos</option><option value="oficial">Fuente oficial</option><option value="tecnico">Referencia técnica</option><option value="periodistico">Prensa</option></select></label>
-              <label>Prioridad<select name="importancia"><option value="">Todas</option><option value="alta">Alta</option><option value="seguimiento">Seguimiento</option></select></label>
               <label>Desde<input name="desde" type="date"></label>
               <label>Hasta<input name="hasta" type="date"></label>
             </div>

@@ -33,10 +33,9 @@ const more = document.querySelector('#mas');
 const retry = document.querySelector('#reintentar');
 const navigation = document.querySelector('#navegacion');
 const sections = document.querySelector('#secciones');
-const apiLink = document.querySelector('#api-novedades');
 const menu = document.querySelector('.menu-toggle');
 
-const filters = ['q','categoria','modo','respaldo','importancia','desde','hasta','jurisdiccion','orden','perfil'];
+const filters = ['q','categoria','modo','desde','hasta','jurisdiccion','orden','perfil'];
 const sector = document.querySelector('#sector-filtro');
 cargarOpciones(form.elements.jurisdiccion,ambitos);
 cargarOpciones(form.elements.perfil,perfiles);
@@ -51,9 +50,7 @@ function showProfile() {
   if(enabled && !form.elements.perfil.value) form.elements.perfil.value=savedProfile;
 }
 const categories = {impositivo:'Impositivo',contable:'Contable',laboral:'Laboral',internacional:'Mercados internacionales',economia:'Economía y finanzas'};
-const modes = {resumen:'Resúmenes',todos:'Boletín',editorial:'Resúmenes revisados',sintesis:'Síntesis automáticas',automatico:'Alertas de fuentes',archivo:'Archivo'};
-const types = {editorial:'Resumen revisado',sintesis:'Síntesis automática',automatico:'Alerta',archivo:'Documento histórico'};
-const tiers = {oficial:'Fuente oficial',tecnico:'Referencia técnica',periodistico:'Prensa'};
+const modes = {resumen:'Resúmenes',todos:'Boletín',editorial:'Resúmenes editoriales',sintesis:'Síntesis automáticas',automatico:'Alertas de fuentes',archivo:'Archivo'};
 const dateTime = new Intl.DateTimeFormat('es-AR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Argentina/Buenos_Aires'});
 
 let request;
@@ -107,10 +104,8 @@ function renderItem(item) {
   const meta = element('div','','meta');
   meta.append(element('b',categories[item.category]),document.createTextNode(
     ' · '+(item.jurisdictions??[]).map(code=>jurisdicciones[code]).join(' / ')+' · '+item.date
-      +(item.importance==='alta'?' · Prioridad alta':'')
   ));
-  const kind = item.reviewedId?'Resumen revisado disponible':item.summaryId?'Síntesis disponible':types[item.mode];
-  article.append(meta,element('h3',item.title),element('p',kind+' · '+(tiers[item.sourceTier]??'Respaldo sin clasificar'),'respaldo'));
+  article.append(meta,element('h3',item.title));
   if(!item.reviewedId && !item.summaryId) article.append(element('p',item.summary));
 
   if(item.brief) {
@@ -137,7 +132,7 @@ function renderItem(item) {
     if(receipt) article.append(receipt);
   }
   if(item.reviewedId || item.summaryId) {
-    const review = element('a',item.reviewedId?'Leer el resumen verificado':'Leer la síntesis automática');
+    const review = element('a','Leer el resumen');
     review.href = '/?'+new URLSearchParams({modo:item.reviewedId?'editorial':'sintesis',q:item.reviewedId??item.summaryId})+'#boletin';
     const p = element('p');
     p.append(review);
@@ -157,7 +152,7 @@ function restoreFilters() {
   if(!form.elements.modo.value) form.elements.modo.value = 'resumen';
   if(!form.elements.orden.value) form.elements.orden.value='recientes';
   showProfile();
-  document.querySelector('.advanced').open = ['desde','hasta','respaldo','importancia'].some(name=>params.has(name))
+  document.querySelector('.advanced').open = ['desde','hasta'].some(name=>params.has(name))
     || ['todos','editorial','sintesis'].includes(params.get('modo'));
 }
 
@@ -196,9 +191,6 @@ function syncNavigation() {
     if(next===category) link.setAttribute('aria-current','true');
     else link.removeAttribute('aria-current');
   }
-  const params=new URLSearchParams(applied);
-  if(params.get('modo')==='todos') params.delete('modo');
-  apiLink.href='/api/v1/novedades'+(params.size?'?'+params:'');
 }
 
 function openAnchor() {
@@ -315,14 +307,11 @@ navigation.addEventListener('click',followFilterLink);
 sections.addEventListener('click',followFilterLink);
 
 async function loadStatus() {
-  const badge = document.querySelector('#salud');
   const details = document.querySelector('#estado-detalle');
   try {
     const response = await fetch('/api/v1/salud');
     if(!response.ok) throw Error();
     const data = await response.json();
-    const labels = {'al-dia':'Fuentes conectadas al día',degradada:'Algunas fuentes sin respuesta',atrasada:'Actualización atrasada',archivo:'Modo archivo',pendiente:'Esperando actualización'};
-    badge.textContent = labels[data.actualizacion]??'Estado de fuentes';
     const results = data.sources.map(source=>source.id+' · '+(source.ok?source.count+' detectadas':'sin respuesta')
       +(source.latest?' · última ficha '+source.latest:''));
     if(data.lastAttempt) results.unshift('Última consulta '+dateTime.format(new Date(data.lastAttempt)));
@@ -338,7 +327,7 @@ async function loadStatus() {
       line.append(heading,element('td',String(row.fichas)),element('td',String(row.resumenes)),element('td',row.ultima??'—'));
       coverage.append(line);
     }
-  } catch { badge.textContent = 'Estado no disponible'; }
+  } catch { details.textContent = 'Estado de fuentes no disponible.'; }
 }
 
 async function loadCatalog() {
@@ -349,7 +338,7 @@ async function loadCatalog() {
     const {items} = await response.json();
     for(const source of items) {
       const row = element('li');
-      row.append(sourceLink(source.url,source.name),document.createTextNode(' · '+(tiers[source.tier]??'Referencia')+' · '+source.role));
+      row.append(sourceLink(source.url,source.name),document.createTextNode(' · '+source.role));
       list.append(row);
     }
   } catch {

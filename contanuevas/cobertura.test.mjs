@@ -41,6 +41,7 @@ test('Jurisdicción y perfil se cruzan sin confundir CABA, provincia y Nación',
   assert.ok(!ids('categoria=impositivo&jurisdiccion=provincial').includes('caba-agip-431-sirtac-enero-2027'));
   assert.deepEqual(ids('jurisdiccion=caba&orden=perfil&perfil=auditoria'),['caba-auditoria-rt-37']);
   assert.deepEqual(ids('jurisdiccion=nacional&orden=perfil&perfil=precios-transferencia'),['arca-5903-precios-transferencia']);
+  assert.deepEqual(ids('jurisdiccion=caba&orden=perfil&perfil=impuestos'),ids('jurisdiccion=caba&perfil=impuestos&orden=recientes'));
   assert.ok(get('orden=relevantes').body.items.findIndex(item=>item.importance==='seguimiento')>0);
   assert.equal(get('jurisdiccion=sin-clasificar&modo=automatico').body.total,1);
   for(const query of ['orden=perfil','orden=ranking','perfil=desconocido','jurisdiccion=desconocida','jurisdiccion=caba&jurisdiccion=nacional']) {
