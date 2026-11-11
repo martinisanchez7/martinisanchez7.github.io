@@ -33,9 +33,12 @@ test('Jurisdicción y perfil se cruzan sin confundir CABA, provincia y Nación',
     (status,body)=>({status,body}),{mode:'archivo'},items,0);
   const ids=query=>get(query).body.items.map(item=>item.id);
   assert.deepEqual(ids('categoria=impositivo&jurisdiccion=caba&orden=recientes'),[
-    'caba-agip-atencion-11-noviembre-2026','caba-agip-339-transparencia-fiscal','caba-comarb-9-padron-federal'
+    'caba-agip-atencion-11-noviembre-2026','caba-agip-431-sirtac-enero-2027','caba-agip-432-sircupa-enero-2027',
+    'caba-agip-339-transparencia-fiscal','caba-comarb-9-padron-federal'
   ]);
-  assert.deepEqual(ids('categoria=impositivo&jurisdiccion=provincial'),['arba-23-planes-2026']);
+  assert.ok(ids('categoria=impositivo&jurisdiccion=provincial').includes('arba-23-planes-2026'));
+  assert.ok(ids('categoria=impositivo&jurisdiccion=provincial').includes('entre-rios-ater-385-401-planes'));
+  assert.ok(!ids('categoria=impositivo&jurisdiccion=provincial').includes('caba-agip-431-sirtac-enero-2027'));
   assert.deepEqual(ids('jurisdiccion=caba&orden=perfil&perfil=auditoria'),['caba-auditoria-rt-37']);
   assert.deepEqual(ids('jurisdiccion=nacional&orden=perfil&perfil=precios-transferencia'),['arca-5903-precios-transferencia']);
   assert.ok(get('orden=relevantes').body.items.findIndex(item=>item.importance==='seguimiento')>0);

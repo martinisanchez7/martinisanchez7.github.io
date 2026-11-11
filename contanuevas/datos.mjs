@@ -1,5 +1,8 @@
+import { ampliacionNoviembre } from './novedades-noviembre.mjs';
+
 export const categorias = ['impositivo', 'contable', 'laboral', 'internacional', 'economia'];
 export const editoriales = [
+  ...ampliacionNoviembre,
   {
     id:'caba-agip-atencion-11-noviembre-2026',category:'impositivo',jurisdictions:['caba'],
     date:'2026-11-11',title:'CABA: sin atención presencial de AGIP en la sede del Consejo el 11 de noviembre',
@@ -230,3 +233,4 @@ export const archivo = [
   {id:'ley-27742',category:'laboral',date:'2024-07-08',title:'Ley 27.742: dónde leer el capítulo de modernización laboral',summary:'El título V del texto original agrupa cambios laborales. La reglamentación y las modificaciones posteriores deben verificarse antes de aplicarlo a una liquidación o a un caso.',source:'Infoleg · Argentina.gob.ar',url:'https://www.argentina.gob.ar/normativa/nacional/ley-27742-401266/texto',mode:'archivo'},
   {id:'fed-2025-01-29',category:'internacional',date:'2025-01-29',title:'Fed: cómo leer una decisión de tasas',summary:'En esta reunión histórica, el FOMC mantuvo el rango objetivo entre 4,25% y 4,50%. Para entender una reacción de mercado, compará el comunicado con las expectativas previas y observá tasas de los bonos y dólar. La decisión por sí sola no predice un movimiento de precios.',source:'Federal Reserve · FOMC',url:'https://www.federalreserve.gov/newsevents/pressreleases/monetary20250129a.htm',mode:'archivo'}
 ];
+

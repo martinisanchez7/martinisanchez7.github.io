@@ -31,7 +31,7 @@ const perfilesPorSeccion={
   economia:['finanzas'], internacional:['finanzas']
 };
 const alcancePorFuente={
-  'reserva-federal':'internacional', agip:'caba', arba:'buenos-aires', comarb:'interjurisdiccional', bcra:'nacional'
+  'reserva-federal':'internacional', 'boletin-caba':'caba', agip:'caba', arba:'buenos-aires', comarb:'interjurisdiccional', bcra:'nacional'
 };
 const alcancePorFicha={
   'casas-particulares-noviembre-2026':'nacional','arca-5918-ganancias-2025':'nacional',
@@ -85,10 +85,14 @@ function catalogIndex(items,summaries) {
   return index;
 }
 export function seleccionarAviso(items,summaries,{category,jurisdiction,profile,last_item},from,through) {
-  return catalogIndex(items,summaries).relevant.find(({card})=>
-    (card.mode==='editorial' || card.mode==='sintesis') && card.id!==last_item && card.date>=from && card.date<=through
+  const matches=({card})=>card.id!==last_item && card.date>=from && card.date<=through
     && (!category || card.category===category) && coincideJurisdiccion(card,jurisdiction)
-    && coincidePerfil(card,profile))?.card;
+    && coincidePerfil(card,profile);
+  const {relevant}=catalogIndex(items,summaries);
+  const summary=relevant.find(row=>(row.card.mode==='editorial' || row.card.mode==='sintesis') && matches(row));
+  if(summary) return summary.card;
+  return relevant.find(row=>row.card.sourceId==='boletin-caba' && row.card.mode==='automatico'
+    && !row.card.reviewedId && matches(row))?.card;
 }
 export function updateStatus(health,lastCompleted) {
   if(health.mode!=='conectado') return 'archivo';
@@ -96,6 +100,22 @@ export function updateStatus(health,lastCompleted) {
   if(!health.lastAttempt||!health.sources.length) return 'pendiente';
   if(!health.sources.every(source=>source.ok) || health.synthesis?.errors>0) return 'degradada';
   return Date.now()-lastCompleted>DAY+RETRY?'atrasada':'al-dia';
+}
+
+function cobertura(items,summaries,now=Date.now()) {
+  const since=new Date(now-29*DAY).toISOString().slice(0,10);
+  const through=new Date(now).toISOString().slice(0,10);
+  const rows=new Map(Object.keys(jurisdicciones).map(code=>[code,{jurisdiccion:code,fichas:0,resumenes:0,ultima:null}]));
+  for(const {card} of catalogIndex(items,summaries).ordered) {
+    if(card.mode==='archivo' || card.date>through || card.date<since || card.reviewedId || card.summaryId) continue;
+    for(const code of card.jurisdictions) {
+      const row=rows.get(code);
+      row.fichas++;
+      if(card.mode==='editorial' || card.mode==='sintesis') row.resumenes++;
+      row.ultima??=card.date;
+    }
+  }
+  return {desde:since,hasta:through,items:[...rows.values()]};
 }
 export function mergeItems(previous, incoming) {
   const current = new Map();
@@ -112,7 +132,8 @@ export function serveApi({pathname,searchParams:p},send,health,items,lastComplet
   if(!pathname.startsWith('/api/')) return undefined;
   if(pathname==='/api/v1/salud') {
     const automatic=summaries.filter(item=>!resumenPorAlerta.has(item.url));
-    return send(200,{...health,entries:editoriales.length+archivo.length+items.length+automatic.length,actualizacion:updateStatus(health,lastCompleted)});
+    return send(200,{...health,entries:editoriales.length+archivo.length+items.length+automatic.length,
+      actualizacion:updateStatus(health,lastCompleted),cobertura:cobertura(items,summaries)});
   }
   if(pathname==='/api/v1/actualizacion') {
     const estado=updateStatus(health,lastCompleted);

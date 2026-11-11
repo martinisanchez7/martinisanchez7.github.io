@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Contanuevas",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "description": "Boletín con alertas pendientes de cotejo y resúmenes normativos revisados. El respaldo de la fuente y la prioridad temática se informan por separado."
   },
   "servers": [
@@ -317,6 +317,64 @@
         "responses": {
           "200": {
             "description": "Modo, intento de consulta, estado de fuentes, total de entradas y estado opcional de la copia local (sin-copia, guardada, restaurada o no-disponible)"
+          }
+        }
+      }
+    },
+    "/api/v1/cotizaciones/usd-cierre": {
+      "get": {
+        "summary": "Último cierre minorista USD del BCRA",
+        "description": "Pesos argentinos por dólar. La fecha pertenece a la observación oficial. Anterior contiene la observación precedente de la serie.",
+        "responses": {
+          "200": {
+            "description": "Cotización de cierre",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "fecha",
+                    "comprador",
+                    "vendedor",
+                    "anterior",
+                    "fuente",
+                    "url",
+                    "rezagado"
+                  ],
+                  "properties": {
+                    "fecha": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "comprador": {
+                      "type": "number"
+                    },
+                    "vendedor": {
+                      "type": "number"
+                    },
+                    "anterior": {
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    },
+                    "fuente": {
+                      "const": "BCRA"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "rezagado": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Consulta inválida"
           }
         }
       }

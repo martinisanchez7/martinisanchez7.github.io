@@ -21,6 +21,7 @@
       <a href="/" class="marca"><img src="/marca.svg" alt="Contanuevas" width="244" height="49"></a>
       <button class="menu-toggle" type="button" aria-controls="navegacion" aria-expanded="false">Menú</button>
       <nav id="navegacion" aria-label="Principal">
+        <a href="/?modo=todos#boletin" data-view="todos">Boletín</a>
         <a href="/?modo=resumen#boletin" data-view="resumen">Resúmenes</a>
         <a href="/?modo=automatico#boletin" data-view="automatico">Alertas de fuentes</a>
         <a href="/?modo=archivo#boletin" data-view="archivo">Archivo</a>
@@ -34,6 +35,11 @@
       </div>
     </aside>
     <main id="contenido">
+      <section id="dolar" class="dolar" aria-label="Dólar oficial minorista al cierre" hidden>
+        <a href="https://www.bcra.gob.ar/cierre-de-cotizaciones-resultado/?category=2" target="_blank" rel="noopener noreferrer">Dólar oficial <span>· BCRA</span></a>
+        <div class="dolar-ventana"><div class="dolar-cinta"><span id="dolar-cierre"></span><span id="dolar-repetido" aria-hidden="true"></span></div></div>
+        <button type="button" aria-label="Pausar movimiento de la cotización" aria-pressed="false">Pausar</button>
+      </section>
       <header class="mast">
         <div>
           <p class="edition">Boletín normativo argentino</p>
@@ -67,7 +73,7 @@
         </details>
       </section>
       <section id="boletin" aria-labelledby="boletin-title">
-        <div class="section-head"><h2 id="boletin-title" tabindex="-1">Resúmenes</h2><p id="cantidad" role="status"></p></div>
+        <div class="section-head"><h2 id="boletin-title" tabindex="-1">Boletín</h2><p id="cantidad" role="status"></p></div>
         <nav id="secciones" aria-label="Secciones del boletín">
           <a href="/#boletin" data-category="" aria-current="true">Todas</a>
           <a href="/?categoria=impositivo#boletin" data-category="impositivo">Impositivo</a>
@@ -112,6 +118,14 @@
       <section id="fuentes" aria-labelledby="fuentes-titulo">
         <h2 id="fuentes-titulo" tabindex="-1">Fuentes y estado</h2>
         <p id="estado-detalle"></p>
+        <details id="cobertura">
+          <summary>Cobertura por jurisdicción · últimos 30 días</summary>
+          <div class="tabla-ficha" tabindex="0" role="region" aria-label="Cobertura por jurisdicción">
+            <table><thead><tr><th scope="col">Jurisdicción</th><th scope="col">Fichas</th><th scope="col">Resúmenes</th><th scope="col">Última publicación</th></tr></thead>
+              <tbody id="cobertura-filas"></tbody>
+            </table>
+          </div>
+        </details>
         <p>Las fichas revisadas incluyen cotejo editorial. Las síntesis automáticas extraen datos de textos oficiales y muestran la fecha de consulta.</p>
         <details id="catalogo"><summary>Ver catálogo de fuentes</summary><ul id="fuentes-lista" aria-live="polite"></ul></details>
       </section>

@@ -1,10 +1,14 @@
 import { createHash } from 'node:crypto';
 import { fuentes } from './catalogo-fuentes.mjs';
+import { provincias } from './criterios.js';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const TIMEOUT_MS = 8_000;
 const BORA = 'https://www.boletinoficial.gob.ar';
 const FED = 'https://www.federalreserve.gov';
+const CABA = 'https://api-restboletinoficial.buenosaires.gob.ar';
+const normalizar=value=>value.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
+const provinciaPorNombre=new Map(Object.entries(provincias).map(([code,label])=>[normalizar(label.replace(' (provincia)','')),code]));
 const dayOptions={year:'numeric',month:'2-digit',day:'2-digit'};
 const argDay=new Intl.DateTimeFormat('en-CA',{...dayOptions,timeZone:'America/Argentina/Buenos_Aires'});
 const fedDay=new Intl.DateTimeFormat('en-CA',{...dayOptions,timeZone:'America/New_York'});
@@ -41,9 +45,9 @@ function validDay(value) {
 }
 
 function classify(title, summary) {
-  const text = `${title} ${summary}`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
-  if (/\b(?:normas? (?:profesionales )?contables?|normas? (?:internacionales? )?de informacion financiera|estados contables|estados financieros|auditoria contable|resolucion tecnica(?: n[o°.]?)? \d+)\b/.test(text)) return 'contable';
-  if (/\b(?:agencia de recaudacion y control aduanero|administracion federal de ingresos publicos|monotributo|impuesto a las ganancias|impuesto al valor agregado|bienes personales|obligaciones tributarias|regimen de retencion|procedimiento tributario)\b/.test(text)) return 'impositivo';
+  const text = normalizar(`${title} ${summary}`);
+  if (/\b(?:normas? (?:profesionales )?contables?|normas? (?:internacionales? )?de informacion financiera|estados contables|estados financieros|auditoria contable|cencya|resolucion tecnica(?: n[o°.]?)? \d+|rt ?\d+)\b/.test(text)) return 'contable';
+  if (/\b(?:agencia de recaudacion y control aduanero|administracion federal de ingresos publicos|monotributo|impuesto a las ganancias|impuesto al valor agregado|bienes personales|ingresos brutos|obligaciones tributarias|regimen de retencion|procedimiento tributario|sirtac|sircupa|sircip|sircreb|precios de transferencia)\b/.test(text)) return 'impositivo';
   if (/administracion nacional de la seguridad social/.test(text) && /\b(haberes?|bases imponibles?|resolucion)\b/.test(text)) return 'laboral';
   if (/\b(?:convenios? colectivos? de trabajo|contrato de trabajo|acuerdos? salariales?|riesgos del trabajo|salario minimo|jornada laboral|relaciones laborales|negociacion colectiva|comision nacional de trabajo en casas particulares|casas particulares|reforma laboral|despidos?|indemnizaciones?|paritarias|sueldos?|salarios?)\b/.test(text)) return 'laboral';
   return '';
@@ -90,6 +94,36 @@ export function parseBoletin(html) {
   }
   if (!recognized && !/no se encontraron (?:avisos|publicaciones)|no hay avisos (?:para|en)/i.test(plain(html, MAX_BYTES))) throw new Error('Formato de edición no reconocido');
   return unique(items);
+}
+
+export function parseBoletinCaba(text) {
+  const edition=JSON.parse(text);
+  if(edition?.boletin===null && !edition.normas) return [];
+  const {anio,mes,dia}=edition?.boletin??{};
+  const date=validDay(`${anio}-${mes}-${dia}`);
+  const branches=edition?.normas?.normas;
+  if(!date || !branches || Array.isArray(branches) || typeof branches!=='object') throw Error('Edición de CABA inválida');
+  const items=[];
+  for(const power of Object.values(branches)) {
+    for(const kind of Object.values(power??{})) {
+      for(const [agency,records] of Object.entries(kind??{})) {
+        if(!Array.isArray(records)) continue;
+        for(const record of records) {
+          const title=plain(String(record?.nombre??''),130);
+          const summary=plain(String(record?.sumario??''),350);
+          const category=classify('',summary) || (/ingresos publicos/.test(normalizar(agency))?'impositivo':'');
+          const id=record?.id_norma;
+          const url=URL.parse(record?.url_norma);
+          if(!title || !summary || !category || !Number.isSafeInteger(id) || !url
+            || url.hostname!==new URL(CABA).hostname || url.username || url.password || url.port
+            || !/^\/download\/\d+$/.test(url.pathname)) continue;
+          items.push({id:'bocaba-'+id,title:title+' · '+plain(agency,120),summary,date,category,
+            url:CABA+url.pathname,source:'Boletín Oficial de CABA',mode:'automatico',jurisdictions:['caba']});
+        }
+      }
+    }
+  }
+  return unique(items).slice(0,60);
 }
 
 function xmlField(item, key) {
@@ -160,6 +194,7 @@ export async function download(fetcher, source) {
 const sources = [
   { id: 'boletin-oficial', url: `${BORA}/seccion/primera`, accept: 'text/html', type: /^text\/html\b/i, parse: parseBoletin },
   { id: 'reserva-federal', url: `${FED}/feeds/press_all.xml`, accept: 'application/rss+xml, application/xml, text/xml', type: /^(?:text\/xml|application\/(?:rss\+xml|xml))\b/i, parse: parseFed },
+  { id: 'boletin-caba', url: `${CABA}/obtenerBoletin/0/true`, accept: 'application/json', type: /^application\/json\b/i, parse: parseBoletinCaba },
 ];
 
 export function parseNews(xml, source) {
@@ -175,14 +210,26 @@ export function parseNews(xml, source) {
     if(!title||!Number.isFinite(published.valueOf())||link.protocol!=='https:'||link.username||link.password||link.port||link.hostname.replace(/^www\./,'')!==origin) continue;
     recognized++;
     // Se conserva sólo el titular y enlace. No se copia la nota ni se ejecuta su HTML.
+    const key=normalizar(title);
+    const tags=[...entry.matchAll(/<category\b[^>]*>([\s\S]*?)<\/category>/gi)].map(m=>normalizar(plain(m[1],100)));
+    const prefix=key.match(/^([a-z ]{3,30}?)\s*(?:[.:]|\s+(?:rg?|resolucion|dec|decreto|ley|dgr|ater|api|arba|atp|aref|atm|agip)\b)/)?.[1];
+    const provincia=provinciaPorNombre.get(prefix)??(source.id==='contadores-en-red'?tags.map(tag=>provinciaPorNombre.get(tag)).find(Boolean):undefined);
+    const local=provincia??(prefix==='caba'||prefix==='ciudad de buenos aires'?'caba':undefined);
+    const profiles=/\b(auditoria|aseguramiento|cencya|rt (37|53))\b/.test(key)?['auditoria']:undefined;
     let category=classify(title,'');
+    if(!category && source.id==='contadores-en-red') category='impositivo';
+    if(!category && (profiles || source.id==='cpce-cordoba')) category='contable';
+    if(!category && source.id==='facpce-novedades' && /\b(sisa|arca|aranceles?|monotributo)\b/.test(key)) category='impositivo';
+    if(!category && source.id==='facpce-novedades') continue;
     if(!category&&/impuestos|fiscal/.test(source.id)) category='impositivo';
     if(!category&&source.id==='iprofesional-legales') continue;
     if(!category) category=/\b(fed|estados unidos|wall street|china|bce|europa|paraguay)\b/i.test(title)?'internacional':'economia';
     link.search='';link.hash='';
     const id=createHash('sha256').update(link.href).digest('hex').slice(0,16);
     const date=argDay.format(published);
-    items.push({id:`prensa-${id}`,title,summary:'Alerta periodística pendiente de cotejo con el documento original. Todavía no hay un resumen normativo verificado.',date,category,url:link.href,source:source.name,sourceId:source.id,mode:'automatico'});
+    const summary=source.tier==='tecnico'?'Alerta técnica. Abrí la publicación para consultar el documento y su alcance.':'Alerta periodística pendiente de cotejo con el documento original. Todavía no hay un resumen normativo verificado.';
+    items.push({id:`prensa-${id}`,title,summary,date,category,url:link.href,source:source.name,sourceId:source.id,mode:'automatico',
+      ...(local?{jurisdictions:[local]}:{}),...(profiles?{profiles}:{})});
   }
   if(/<item\b/i.test(xml)&&!recognized) throw new Error('Entradas RSS no reconocidas');
   return unique(items);
@@ -191,12 +238,34 @@ export function parseNews(xml, source) {
 for(const source of fuentes.filter(s=>s.feed)) sources.push({id:source.id,url:source.feed,accept:'application/rss+xml, application/xml, text/xml',type:/^(?:text\/xml|application\/(?:rss\+xml|xml))\b/i,parse:xml=>parseNews(xml,source)});
 export const sourceIds=sources.map(s=>s.id);
 
-export async function refresh(fetcher = fetch, ids) {
+export async function refresh(fetcher = fetch, ids, { now=Date.now(), lookback=0, provincialPages=1 }={}) {
   const active=ids? sources.filter(source=>ids.includes(source.id)):sources;
   const fetchSource=async source => {
     try {
-      const items = source.parse(await download(fetcher, source)).map(item=>({...item,sourceId:source.id}));
-      return { items, status: { id: source.id, ok: true, count: items.length } };
+      const items = source.parse(await download(fetcher, source));
+      let historicoIncompleto=0;
+      const history=[];
+      if(lookback && ['boletin-oficial','boletin-caba'].includes(source.id)) {
+        for(let days=1;days<=Math.min(lookback,7);days++) {
+          const day=argDay.format(now-days*86_400_000);
+          if([0,6].includes(new Date(day).getUTCDay())) continue;
+          const dateUrl=source.id==='boletin-oficial'?`${source.url}/${day.replaceAll('-','')}`:
+            `${CABA}/obtenerBoletin/${day.split('-').reverse().join('-')}/true`;
+          history.push({url:dateUrl,day});
+        }
+      }
+      if(source.id==='contadores-en-red') {
+        for(let page=2;page<=Math.min(provincialPages,8);page++) history.push({url:source.url+'?paged='+page});
+      }
+      for(const {url,day} of history) {
+        try {
+          const extra=source.parse(await download(fetcher,{...source,url}));
+          items.push(...extra.filter(item=>!day || item.date===day));
+        } catch { historicoIncompleto++; }
+      }
+      const found=unique(items).map(item=>({...item,sourceId:source.id}));
+      return {items:found,status:{id:source.id,ok:true,count:found.length,
+        latest:found.reduce((day,item)=>item.date>day?item.date:day,''),historicoIncompleto}};
     } catch (error) {
       const message = error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'Tiempo de espera agotado' : 'No se pudo leer o validar la fuente';
       return { items: [], status: { id: source.id, ok: false, count: 0, error: message } };

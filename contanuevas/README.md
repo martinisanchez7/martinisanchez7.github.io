@@ -34,12 +34,17 @@ El contrato para importar en clientes de API está en `openapi.json`.
 | `GET /api/v1/novedades/{id}` | Ficha única o `404`. |
 | `GET /api/v1/fuentes` | Catálogo con el rol de cada fuente. |
 | `GET /api/v1/salud` | Modo, último intento, estado por fuente y total de fichas. |
+| `GET /api/v1/cotizaciones/usd-cierre` | Último cierre minorista de referencia del BCRA, comprador y vendedor en pesos por dólar, fecha y cierre anterior. |
 
 Ejemplo: `http://127.0.0.1:4195/api/v1/novedades?categoria=contable&modo=archivo`. Las fechas exactas se consultan como `AAAA-MM-DD`; `datePrecision` permite distinguir fechas de referencia mensuales. Se devuelve `400` ante filtros inválidos. El cliente no puede pedir URLs de ingestión ni disparar una descarga remota.
 
 Para ver novedades impositivas de CABA por prioridad, usá `?categoria=impositivo&jurisdiccion=caba&orden=relevantes`. Para auditoría local, usá `?jurisdiccion=caba&orden=perfil&perfil=auditoria`. Cada ficha puede tener más de un alcance. Las fichas de prensa sin alcance confirmado quedan pendientes de clasificación.
 
 Los avisos en el Worker respetan la hora argentina, la sección, el alcance y el sector elegidos. Priorizan una ficha revisada o una síntesis oficial del día o del día anterior y enlazan a su detalle. Si el filtro queda sin coincidencias, el aviso indica que no hay fichas nuevas con resumen.
+
+La cobertura de los últimos 30 días informa fichas, resúmenes y última fecha por jurisdicción. Los titulares provinciales de Contadores en Red y las publicaciones profesionales de FACPCE y del Consejo de Córdoba se importan como alertas. Se consulta también el sumario oficial de CABA. Errepar se usa para orientar la revisión editorial de novedades públicas.
+
+El Worker vuelve a consultar los canales durante el día y recorre un tramo de ediciones anteriores para recuperar las publicadas después de la primera consulta. El cierre minorista mantiene la fecha del BCRA, incluso durante feriados o cuando la serie todavía no incorpora un cierre nuevo.
 
 Antes de producción: almacenamiento compartido si hay más de una instancia, programación con alertas, revisión humana de fichas, prueba visual del alojamiento, permisos de fuentes comerciales y revisión de dominio/HTTPS. La publicación de Instagram queda para después de aprobar la primera edición.
 

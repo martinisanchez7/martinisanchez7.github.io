@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseBoletin, parseFed, parseNews, refresh, sourceIds } from './fuentes.mjs';
+import { parseBoletin, parseBoletinCaba, parseFed, parseNews, refresh, sourceIds } from './fuentes.mjs';
+import { fuentes } from './catalogo-fuentes.mjs';
 
 const notice = (id, date, authority, summary = '') => `<a class="avisos" href="/detalleAviso/primera/${id}/${date}"><div class="linea-aviso"><p class="item">${authority}</p><p><small>Resolución ${id}/2026</small><small>${summary}</small></p></div></a>`;
 const html = `<!doctype html><main>${notice(123, '20261110', 'AGENCIA DE RECAUDACI&Oacute;N Y CONTROL ADUANERO', 'Monotributo')}${notice(124, '20261110', 'MINISTERIO DE CAPITAL HUMANO', 'Convenio Colectivo de Trabajo')}${notice(125, '20261109', 'INSPECCIÓN GENERAL DE JUSTICIA', 'Normas contables')}${notice(126, '20261110', 'MINISTERIO DE DEFENSA', 'Designación')}${notice(127, '20260230', 'AGENCIA DE RECAUDACIÓN Y CONTROL ADUANERO')}${notice(123, '20261110', 'AGENCIA DE RECAUDACIÓN Y CONTROL ADUANERO')}</main>`;
@@ -69,4 +70,29 @@ test('Finanzas acepta la etiqueta binaria sólo para un RSS válido en su URL of
   assert.deepEqual(valid.status.filter(source=>source.ok).map(source=>source.id),['ambito-finanzas']);
   assert.equal(valid.items[0].url,article);
   assert.ok((await attempt('<html>'+payload+'</html>')).status.every(source=>!source.ok));
+});
+
+test('CABA conserva sumarios y jurisdicción con enlaces del boletín oficial',()=>{
+  const norma={id_norma:1015356,nombre:'Resolución N° 431/AGIP/26',
+    sumario:'Adhiere al Sistema SIRTAC',url_norma:'http://api-restboletinoficial.buenosaires.gob.ar/download/5398821'};
+  const edition=JSON.stringify({boletin:{anio:'2026',mes:'11',dia:'06'},normas:{normas:{
+    'Poder Ejecutivo':{'Resolución':{'AGIP':[norma,{...norma,id_norma:1015357,url_norma:'https://example.invalid/download/5398822'}]}}
+  }}});
+  const [item,...rest]=parseBoletinCaba(edition);
+  assert.equal(rest.length,0);
+  assert.deepEqual(item.jurisdictions,['caba']);
+  assert.equal(item.date,'2026-11-06');
+  assert.equal(item.url,'https://api-restboletinoficial.buenosaires.gob.ar/download/5398821');
+});
+
+test('El índice provincial aplica el alcance explícito y la paginación del RSS',async()=>{
+  const source=fuentes.find(source=>source.id==='contadores-en-red');
+  const item=(name,url,tag)=>rss(`<item><title>${name}</title><link>${url}</link><pubDate>Wed, 11 Nov 2026 14:42:12 +0000</pubDate><category>${tag}</category></item>`);
+  const origin=new URL(source.url).origin;
+  const result=await refresh(async url=>new Response(url===source.feed
+    ?item('Corrientes R. 313/2026 DGR Prorrogan vencimientos',origin+'/corrientes/','Recorrido por provincias')
+    :item('Medidas de alivio fiscal',origin+'/tucuman/','Tucumán'),{headers:{'Content-Type':'application/rss+xml'}}),
+  [source.id],{provincialPages:2});
+  assert.deepEqual(new Set(result.items.flatMap(row=>row.jurisdictions)),new Set(['corrientes','tucuman']));
+  assert.equal(result.status[0].latest,'2026-11-11');
 });

@@ -1,6 +1,31 @@
 import { receiptView } from './simulador.js';
 import { ambitos, jurisdicciones, perfiles, cargarOpciones } from './criterios.js';
 
+async function cargarCierre() {
+  const bar=document.querySelector('#dolar');
+  try {
+    const response=await fetch('/api/v1/cotizaciones/usd-cierre');
+    if(!response.ok) return;
+    const data=await response.json();
+    const format=new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:3});
+    const variation=new Intl.NumberFormat('es-AR',{style:'percent',maximumFractionDigits:2,signDisplay:'exceptZero'});
+    const relative=key=>data.anterior?.[key]?` (${variation.format(data[key]/data.anterior[key]-1)})`:'';
+    const value=`Compra ${format.format(data.comprador)}${relative('comprador')}  ·  Venta ${format.format(data.vendedor)}${relative('vendedor')}  ·  Cierre ${data.fecha.split('-').reverse().join('/')}`;
+    const content=data.rezagado?value+' · Último dato disponible':value;
+    bar.querySelector('#dolar-cierre').textContent=content;
+    bar.querySelector('#dolar-repetido').textContent=content;
+    bar.querySelector('button').addEventListener('click',event=>{
+      const button=event.currentTarget;
+      const paused=bar.classList.toggle('dolar-pausado');
+      button.setAttribute('aria-pressed',String(paused));
+      button.setAttribute('aria-label',paused?'Reanudar movimiento de la cotización':'Pausar movimiento de la cotización');
+      button.textContent=paused?'Reanudar':'Pausar';
+    });
+    bar.hidden=false;
+  } catch { /* El boletín se puede leer sin una cotización disponible. */ }
+}
+cargarCierre();
+
 const form = document.querySelector('#filtros');
 const list = document.querySelector('#entradas');
 const count = document.querySelector('#cantidad');
@@ -126,8 +151,7 @@ function renderItem(item) {
 
 function restoreFilters() {
   const params = new URLSearchParams(location.search);
-  const validCategory = Object.hasOwn(categories,params.get('categoria'));
-  const defaultMode = validCategory || params.get('orden')==='perfil'?'todos':'resumen';
+  const defaultMode = 'todos';
   for(const name of filters) form.elements.namedItem(name).value = params.get(name)??(name==='modo'?defaultMode:'');
   if(!Object.hasOwn(categories,form.elements.categoria.value)) form.elements.categoria.value = '';
   if(!form.elements.modo.value) form.elements.modo.value = 'resumen';
@@ -150,11 +174,11 @@ function syncNavigation() {
   const category = form.elements.categoria.value;
   const selected = location.hash==='#fuentes'?'fuentes'
     : location.hash==='#simulador'?'simulador'
-    : ['automatico','archivo'].includes(mode)?mode:'resumen';
+    : ['automatico','archivo','todos'].includes(mode)?mode:'resumen';
   for(const link of navigation.querySelectorAll('a[data-view]')) {
     if(link.dataset.view===selected) link.setAttribute('aria-current','page');
     else link.removeAttribute('aria-current');
-    if(['resumen','automatico','archivo'].includes(link.dataset.view)) {
+    if(['resumen','automatico','archivo','todos'].includes(link.dataset.view)) {
       const params = new URLSearchParams({modo:link.dataset.view});
       if(category) params.set('categoria',category);
       for(const name of ['jurisdiccion','orden','perfil']) if(applied.has(name)) params.set(name,applied.get(name));
@@ -297,13 +321,23 @@ async function loadStatus() {
     const response = await fetch('/api/v1/salud');
     if(!response.ok) throw Error();
     const data = await response.json();
-    const labels = {'al-dia':'Actualización completa',degradada:'Actualización parcial',atrasada:'Actualización atrasada',archivo:'Modo archivo',pendiente:'Esperando actualización'};
+    const labels = {'al-dia':'Fuentes conectadas al día',degradada:'Algunas fuentes sin respuesta',atrasada:'Actualización atrasada',archivo:'Modo archivo',pendiente:'Esperando actualización'};
     badge.textContent = labels[data.actualizacion]??'Estado de fuentes';
-    const results = data.sources.map(source=>source.id+' · '+(source.ok?source.count+' detectadas':'sin respuesta'));
+    const results = data.sources.map(source=>source.id+' · '+(source.ok?source.count+' detectadas':'sin respuesta')
+      +(source.latest?' · última ficha '+source.latest:''));
     if(data.lastAttempt) results.unshift('Última consulta '+dateTime.format(new Date(data.lastAttempt)));
+    if(data.cargaInicial) results.push('Carga de nuevas fuentes '+dateTime.format(new Date(data.cargaInicial)));
     if(data.synthesis) results.push('Síntesis automáticas guardadas: '+data.synthesis.count);
     if(data.synthesis?.errors) results.push('Consultas de síntesis fallidas: '+data.synthesis.errors);
     details.textContent = results.join(' / ') || 'Todavía no hay una consulta registrada.';
+    const coverage=document.querySelector('#cobertura-filas');
+    for(const row of data.cobertura?.items??[]) {
+      const line=element('tr');
+      const heading=element('th',jurisdicciones[row.jurisdiccion]);
+      heading.scope='row';
+      line.append(heading,element('td',String(row.fichas)),element('td',String(row.resumenes)),element('td',row.ultima??'—'));
+      coverage.append(line);
+    }
   } catch { badge.textContent = 'Estado no disponible'; }
 }
 

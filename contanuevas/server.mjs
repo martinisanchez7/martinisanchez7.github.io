@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { DAY, RETRY, security, mergeItems, serveApi, updateStatus } from './api.mjs';
 import { compileSummaries } from './sintesis.mjs';
+import { ultimoCierre } from './cotizacion.mjs';
 
 const files = new Map([['/','index.html'],['/estilo.css','estilo.css'],['/app.js','app.js'],['/simulador.js','simulador.js'],['/marca.svg','marca.svg'],['/icono.svg','icono.svg'],['/serif.woff2','serif.woff2'],['/sans.woff2','sans.woff2'],['/openapi.json','openapi.json']]);
 files.set('/criterios.js','criterios.js');
@@ -63,6 +64,9 @@ export function createApp({live=false, update, cacheFile, compile=compileSummari
       if(!['GET','HEAD'].includes(req.method)) return send(405,{error:'Método no permitido'},undefined,{Allow:'GET, HEAD'});
       if(!req.url?.startsWith('/') || req.url.startsWith('//') || req.url.length>2048) return send(400,{error:'Ruta inválida'});
       const url=new URL(req.url,'http://localhost');
+      if(url.pathname==='/api/v1/cotizaciones/usd-cierre') {
+        return url.search?send(400,{error:'Ruta inválida'}):send(200,await ultimoCierre());
+      }
       const result=serveApi(url,send,health,current,lastCompleted,summaries);
       if(url.pathname.startsWith('/api/')) return result;
       const {pathname}=url;

@@ -1,9 +1,11 @@
 import { boletinSnapshotKey as snapshotKey, mergeItems, rutaDeApi, security, serveApi, updateStatus } from './api.mjs';
 import { refresh, sourceIds } from './fuentes.mjs';
 import { compileSummaries } from './sintesis.mjs';
+import { actualizarCierre, ultimoCierre } from './cotizacion.mjs';
+import relevamientoInicial from './relevamiento-inicial.json' with { type:'json' };
 export { AvisosDiarios } from './avisos.mjs';
 
-const coverageVersion = 5;
+const coverageVersion = 6;
 const readCache = new WeakMap();
 const publicFiles = new Set(['/','/index.html','/estilo.css','/app.js','/simulador.js','/marca.svg','/icono.svg','/serif.woff2','/sans.woff2','/openapi.json',
   '/instalar.js','/criterios.js','/manifest.webmanifest','/service-worker.js','/app-192.png','/app-512.png']);
@@ -36,29 +38,41 @@ async function readSnapshot(kv, useCache) {
     fallback.health.sources=[{id:'almacenamiento',ok:false,count:0}];
     return fallback;
   }
+  if(stored.health.coverageVersion===5) {
+    stored.items=mergeItems(relevamientoInicial.items,stored.items);
+    stored.health.cargaInicial=relevamientoInicial.capturado;
+  }
   if(useCache) readCache.set(kv,{snapshot:stored,expiresAt:Date.now()+localTtl});
   return stored;
 }
 
-export async function actualizar(kv, now = Date.now(), update = ids=>refresh(fetch,ids), compile = compileSummaries) {
+export async function actualizar(kv, now = Date.now(), update, compile = compileSummaries) {
   const previous = await readSnapshot(kv,false);
   const lastAttempt = new Date(now).toISOString();
-  const sameDay = previous.health.lastAttempt?.slice(0,10) === lastAttempt.slice(0,10)
+  const interval=4*60*60*1000;
+  const sameCycle = Math.floor(Date.parse(previous.health.lastAttempt)/interval)===Math.floor(now/interval)
     && previous.health.coverageVersion === coverageVersion;
-  const alreadyUpdated = sameDay
+  const alreadyUpdated = sameCycle
     && previous.health.synthesis?.errors === 0
     && previous.health.sources.length && previous.health.sources.every(source => source.ok);
   if(alreadyUpdated) return;
   const completeInventory = sourceIds.every(id=>previous.health.sources.some(source=>source.id===id));
-  const retryIds = sameDay && completeInventory
+  const retryIds = sameCycle && completeInventory
     ? previous.health.sources.filter(source=>!source.ok).map(source=>source.id)
     : undefined;
   let next;
-  try { next = await update(retryIds); }
+  try {
+    const inicial=previous.health.coverageVersion!==coverageVersion;
+    next = await (update?update(retryIds):refresh(fetch,retryIds,{
+      now,lookback:inicial?7:3,provincialPages:inicial?8:2
+    }));
+  }
   catch { next = {items:[],status:[{id:'ingesta',ok:false,count:0}]}; }
   const items = mergeItems(previous.items,next.items);
   const sourcesById = new Map((retryIds?previous.health.sources:[]).map(source=>[source.id,source]));
-  for(const {id,ok,count} of next.status) sourcesById.set(id,{id,ok,count});
+  for(const {id,ok,count,latest,historicoIncompleto} of next.status) {
+    sourcesById.set(id,{id,ok,count,latest:latest||sourcesById.get(id)?.latest||null,historicoIncompleto:historicoIncompleto??0});
+  }
   const sources = [...sourcesById.values()];
   let summaries=previous.summaries??[];
   let synthesis={attempted:0,errors:1,count:summaries.length};
@@ -70,6 +84,7 @@ export async function actualizar(kv, now = Date.now(), update = ids=>refresh(fet
     // Keep the previous published summaries if the compilation step stops.
   }
   const health = {...previous.health,lastAttempt,sources,cache:'guardada',coverageVersion,synthesis};
+  delete health.cargaInicial;
   await kv.put(snapshotKey,JSON.stringify({health,items,summaries,lastCompleted:now}));
   readCache.delete(kv);
   console.log('Contanuevas:',updateStatus(health,now),sources.map(s=>[s.id,s.ok,s.count]));
@@ -106,6 +121,10 @@ export default {
       } catch { return send(503,{error:'Avisos temporalmente no disponibles'}); }
     }
     if(!['GET','HEAD'].includes(request.method)) return send(405,{error:'Método no permitido'},undefined,{Allow:'GET, HEAD'});
+    if(url.pathname==='/api/v1/cotizaciones/usd-cierre') {
+      if(url.search) return send(400,{error:'Ruta inválida'});
+      return send(200,await ultimoCierre(env.BOLETIN),undefined,{'Cache-Control':'public, max-age=300'});
+    }
     if(!url.pathname.startsWith('/api/')) {
       if(!publicFiles.has(url.pathname)) {
         return send(404,{error:'Ruta no encontrada'});
@@ -139,6 +158,9 @@ export default {
     return serveApi(url,send,health,items,lastCompleted,summaries);
   },
   async scheduled(event,env) {
-    await actualizar(env.BOLETIN,event.scheduledTime);
+    await Promise.all([
+      actualizar(env.BOLETIN,event.scheduledTime),
+      actualizarCierre(env.BOLETIN,event.scheduledTime).catch(()=>console.warn('Contanuevas: no se pudo consultar el cierre BCRA'))
+    ]);
   }
 };

@@ -103,3 +103,20 @@ footer{font-size:15px;color:var(--muted);border-top:1px solid var(--line);paddin
   #secciones a{padding-inline:9px}
   .advanced-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+.dolar:not([hidden]){display:flex;align-items:center;gap:12px;padding:6px 10px;margin:0 0 14px;background:#122333;color:#fff;border-radius:5px;font-size:.8rem}
+.dolar a{flex:none;color:#fff;text-underline-offset:3px}
+.dolar a span{color:#ead5be}
+.dolar button{flex:none;background:transparent;color:inherit;border:1px solid #a8b6bf;padding:4px 8px;font:inherit}
+.dolar-ventana{min-width:0;flex:1;overflow:hidden}
+.dolar-cinta{display:flex;width:max-content;font-variant-numeric:tabular-nums;animation:desplazar-cierre 25s linear infinite}
+.dolar-cinta span{padding-inline-end:38px;white-space:pre}
+.dolar:hover .dolar-cinta,.dolar:focus-within .dolar-cinta{animation-play-state:paused}
+.dolar-pausado .dolar-cinta{animation:none;width:auto}
+.dolar-pausado .dolar-cinta span:first-child{white-space:normal}
+.dolar-pausado #dolar-repetido{display:none}
+@keyframes desplazar-cierre{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){
+  .dolar .dolar-cinta{animation:none;width:auto}
+  .dolar .dolar-cinta span:first-child{white-space:normal}
+  .dolar #dolar-repetido,.dolar button{display:none}
+}
