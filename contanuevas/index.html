@@ -8,18 +8,20 @@
   <title>Contanuevas · Boletín normativo</title>
   <link rel="icon" href="/icono.svg">
   <link rel="stylesheet" href="/estilo.css">
-  <script src="/app.js" defer></script>
+  <script type="module" src="/app.js"></script>
 </head>
 <body>
   <a class="saltar" href="#boletin">Saltar al boletín</a>
   <div class="shell">
     <aside class="sidebar">
       <a href="/" class="marca"><img src="/marca.svg" alt="Contanuevas" width="244" height="49"></a>
-      <nav aria-label="Principal">
-        <a href="/?modo=resumen#boletin">Resúmenes</a>
-        <a href="/?modo=automatico#boletin">Alertas de fuentes</a>
-        <a href="/?modo=archivo#boletin">Archivo</a>
-        <a href="#fuentes">Fuentes y estado</a>
+      <button class="menu-toggle" type="button" aria-controls="navegacion" aria-expanded="false">Menú</button>
+      <nav id="navegacion" aria-label="Principal">
+        <a href="/?modo=resumen#boletin" data-view="resumen">Resúmenes</a>
+        <a href="/?modo=automatico#boletin" data-view="automatico">Alertas de fuentes</a>
+        <a href="/?modo=archivo#boletin" data-view="archivo">Archivo</a>
+        <a href="/?modo=resumen&amp;categoria=laboral#simulador" data-view="simulador">Simulador</a>
+        <a href="#fuentes" data-view="fuentes">Fuentes y estado</a>
       </nav>
       <div class="sidebar-bottom">
         <p>Para desarrolladores</p>

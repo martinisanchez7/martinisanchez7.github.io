@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { DAY, RETRY, security, mergeItems, serveApi, updateStatus } from './api.mjs';
 import { compileSummaries } from './sintesis.mjs';
 
-const files = new Map([['/','index.html'],['/estilo.css','estilo.css'],['/app.js','app.js'],['/marca.svg','marca.svg'],['/icono.svg','icono.svg'],['/serif.woff2','serif.woff2'],['/sans.woff2','sans.woff2'],['/openapi.json','openapi.json']]);
+const files = new Map([['/','index.html'],['/estilo.css','estilo.css'],['/app.js','app.js'],['/simulador.js','simulador.js'],['/marca.svg','marca.svg'],['/icono.svg','icono.svg'],['/serif.woff2','serif.woff2'],['/sans.woff2','sans.woff2'],['/openapi.json','openapi.json']]);
 const types = {html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',svg:'image/svg+xml',woff2:'font/woff2',json:'application/json; charset=utf-8'};
 export function createApp({live=false, update, cacheFile, compile=compileSummaries}={}) {
   let current = [];

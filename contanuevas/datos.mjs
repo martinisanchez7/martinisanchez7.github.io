@@ -20,6 +20,7 @@ export const editoriales = [
     },
     tables:[
       {
+        period:'2026-11',
         caption:'Noviembre de 2026 · mínimos en pesos',
         columns:['Categoría','Hora con retiro','Hora sin retiro','Mes con retiro','Mes sin retiro'],
         rows:[
@@ -31,6 +32,7 @@ export const editoriales = [
         ]
       },
       {
+        period:'2026-12',
         caption:'Diciembre de 2026 · mínimos en pesos',
         columns:['Categoría','Hora con retiro','Hora sin retiro','Mes con retiro','Mes sin retiro'],
         rows:[

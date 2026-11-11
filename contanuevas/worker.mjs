@@ -14,7 +14,7 @@ export async function actualizar(kv, now = Date.now(), update = refresh, compile
   const previous = (await kv.get(snapshotKey,'json')) ?? empty();
   const lastAttempt = new Date(now).toISOString();
   const alreadyUpdated = previous.health.lastAttempt?.slice(0,10) === lastAttempt.slice(0,10)
-    && previous.health.coverageVersion === 3
+    && previous.health.coverageVersion === 4
     && previous.health.synthesis?.errors === 0
     && previous.health.sources.length && previous.health.sources.every(source => source.ok);
   if(alreadyUpdated) return;
@@ -32,7 +32,7 @@ export async function actualizar(kv, now = Date.now(), update = refresh, compile
   } catch {
     // Keep the previous published summaries if the compilation step stops.
   }
-  const health = {...previous.health,lastAttempt,sources,cache:'guardada',coverageVersion:3,synthesis};
+  const health = {...previous.health,lastAttempt,sources,cache:'guardada',coverageVersion:4,synthesis};
   await kv.put(snapshotKey,JSON.stringify({health,items,summaries,lastCompleted:now}));
   console.log('Contanuevas:',updateStatus(health,now),sources.map(s=>[s.id,s.ok,s.count]));
 }
@@ -47,7 +47,7 @@ export default {
     if(!['GET','HEAD'].includes(request.method)) return send(405,{error:'Método no permitido'},undefined,{Allow:'GET, HEAD'});
     if(url.pathname.length+url.search.length>2048) return send(400,{error:'Ruta inválida'});
     if(!url.pathname.startsWith('/api/')) {
-      if(!['/','/index.html','/estilo.css','/app.js','/marca.svg','/icono.svg','/serif.woff2','/sans.woff2','/openapi.json'].includes(url.pathname)) {
+      if(!['/','/index.html','/estilo.css','/app.js','/simulador.js','/marca.svg','/icono.svg','/serif.woff2','/sans.woff2','/openapi.json'].includes(url.pathname)) {
         return send(404,{error:'Ruta no encontrada'});
       }
       const asset = await env.ASSETS.fetch(request);

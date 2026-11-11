@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Contanuevas",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "description": "Boletín con alertas pendientes de cotejo y resúmenes normativos revisados. El respaldo de la fuente y la prioridad temática se informan por separado."
   },
   "servers": [
@@ -411,6 +411,11 @@
                       "type": "string"
                     }
                   }
+                },
+                "period": {
+                  "type": "string",
+                  "pattern": "^[0-9]{4}-[0-9]{2}$",
+                  "description": "Período de la escala en formato AAAA-MM cuando el cuadro se puede usar en el simulador."
                 }
               }
             }

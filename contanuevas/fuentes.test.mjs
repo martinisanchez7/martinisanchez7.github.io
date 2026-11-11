@@ -57,3 +57,16 @@ test('refresh: rechaza formato incorrecto y corta cuerpo excesivo', async () => 
   assert.deepEqual(result.items, []);
   assert.deepEqual(result.status.slice(0,2).map(status => status.ok), [false, false]);
 });
+
+test('Finanzas acepta la etiqueta binaria sólo para un RSS válido en su URL oficial',async()=>{
+  const feed = 'https://www.ambito.com/rss/pages/finanzas.xml';
+  const article = 'https://www.ambito.com/finanzas/noticia-n123';
+  const payload = rss(fedItem(article));
+  const attempt = async body => refresh(async url=>new Response(url===feed?body:payload,{
+    headers:{'content-type':'application/octet-stream'}
+  }));
+  const valid = await attempt(payload);
+  assert.deepEqual(valid.status.filter(source=>source.ok).map(source=>source.id),['ambito-finanzas']);
+  assert.equal(valid.items[0].url,article);
+  assert.ok((await attempt('<html>'+payload+'</html>')).status.every(source=>!source.ok));
+});

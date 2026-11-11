@@ -117,7 +117,9 @@ export async function download(fetcher, source) {
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   if (response.redirected || (response.url && response.url !== source.url)) throw new Error('Origen inesperado');
   const kind = response.headers.get('content-type') ?? '';
-  if (!source.type.test(kind)) throw new Error('Tipo de contenido inesperado');
+  const mislabeledFinanceFeed = source.url==='https://www.ambito.com/rss/pages/finanzas.xml'
+    && /^application\/octet-stream(?:\s*;|\s*$)/i.test(kind);
+  if (!source.type.test(kind) && !mislabeledFinanceFeed) throw new Error('Tipo de contenido inesperado');
   if (Number(response.headers.get('content-length')) > MAX_BYTES) throw new Error('Respuesta demasiado grande');
   if (!response.body) throw new Error('Respuesta sin contenido');
   const reader = response.body.getReader();
@@ -132,7 +134,11 @@ export async function download(fetcher, source) {
       if (bytes > MAX_BYTES) throw new Error('Respuesta demasiado grande');
       body += decoder.decode(value, { stream: true });
     }
-    return body + decoder.decode();
+    body += decoder.decode();
+    if(mislabeledFinanceFeed && !/^\s*(?:<\?xml\s[^?]*\?>\s*)?<rss\b[^>]*>\s*<channel\b/i.test(body)) {
+      throw new Error('El canal no contiene un RSS');
+    }
+    return body;
   } finally {
     if (bytes > MAX_BYTES) await reader.cancel().catch(() => {});
     reader.releaseLock();

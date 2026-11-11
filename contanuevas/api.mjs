@@ -23,7 +23,7 @@ export function updateStatus(health,lastCompleted) {
   if(health.mode!=='conectado') return 'archivo';
   if(health.cache==='no-disponible') return 'degradada';
   if(!health.lastAttempt||!health.sources.length) return 'pendiente';
-  if(!health.sources.every(source=>source.ok)) return 'degradada';
+  if(!health.sources.every(source=>source.ok) || health.synthesis?.errors>0) return 'degradada';
   return Date.now()-lastCompleted>DAY+RETRY?'atrasada':'al-dia';
 }
 export function mergeItems(previous, incoming) {

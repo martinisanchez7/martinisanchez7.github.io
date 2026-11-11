@@ -1,7 +1,11 @@
+import { receiptView } from './simulador.js';
+
 const form = document.querySelector('#filtros');
 const list = document.querySelector('#entradas');
 const count = document.querySelector('#cantidad');
 const more = document.querySelector('#mas');
+const navigation = document.querySelector('#navegacion');
+const menu = document.querySelector('.menu-toggle');
 const filters = ['q','categoria','modo','respaldo','importancia','desde','hasta'];
 const categories = {impositivo:'Impositivo',contable:'Contable',laboral:'Laboral',internacional:'Mercados internacionales',economia:'Economía y finanzas'};
 const modes = {resumen:'Resúmenes',todos:'Boletín',editorial:'Resúmenes revisados',sintesis:'Síntesis automáticas',automatico:'Alertas de fuentes',archivo:'Archivo'};
@@ -85,6 +89,8 @@ function renderItem(item) {
       detail.append(p);
     }
     article.append(detail);
+    const receipt = receiptView(item.tables??[]);
+    if(receipt) article.append(receipt);
   }
   if(item.reviewedId || item.summaryId) {
     const review = element('a',item.reviewedId?'Leer el resumen verificado':'Leer la síntesis automática');
@@ -113,6 +119,27 @@ function formFilters() {
   return params;
 }
 
+function syncNavigation() {
+  const mode = form.elements.modo.value;
+  const selected = location.hash==='#fuentes'?'fuentes'
+    : location.hash==='#simulador'?'simulador'
+    : ['automatico','archivo'].includes(mode)?mode:'resumen';
+  for(const link of navigation.querySelectorAll('a[data-view]')) {
+    if(link.dataset.view===selected) link.setAttribute('aria-current','page');
+    else link.removeAttribute('aria-current');
+  }
+}
+
+function openAnchor() {
+  const target = document.getElementById(location.hash.slice(1));
+  if(!target) return;
+  if(target.id==='simulador') {
+    target.open = true;
+    target.querySelector('summary').focus({preventScroll:true});
+  }
+  target.scrollIntoView({block:'start'});
+}
+
 async function load(append=false) {
   request?.abort();
   const next = new AbortController();
@@ -122,11 +149,7 @@ async function load(append=false) {
     applied = formFilters();
     list.replaceChildren();
     document.querySelector('#boletin-title').textContent = modes[applied.get('modo')]??'Boletín';
-    const mode = applied.get('modo');
-    for(const link of document.querySelectorAll('.sidebar nav a')) {
-      if(new URL(link.href).searchParams.get('modo')===mode) link.setAttribute('aria-current','page');
-      else link.removeAttribute('aria-current');
-    }
+    syncNavigation();
   }
   more.hidden = true;
   count.textContent = 'Buscando…';
@@ -157,10 +180,30 @@ form.addEventListener('submit',event=>{
   event.preventDefault();
   const target = '/?'+formFilters()+'#boletin';
   if(target!==location.pathname+location.search+location.hash) history.pushState(null,'',target);
-  load();
+  load().then(openAnchor);
 });
-addEventListener('popstate',()=>{restoreFilters();load();});
+addEventListener('popstate',()=>{restoreFilters();load().then(openAnchor);});
+addEventListener('hashchange',syncNavigation);
 more.addEventListener('click',()=>load(true));
+menu.addEventListener('click',()=>{
+  menu.setAttribute('aria-expanded',String(menu.getAttribute('aria-expanded')!=='true'));
+});
+navigation.addEventListener('click',event=>{
+  const link = event.target.closest('a[data-view]');
+  if(!link || event.button!==0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+  event.preventDefault();
+  menu.setAttribute('aria-expanded','false');
+  const target = new URL(link.href);
+  const changed = target.search!==location.search;
+  history.pushState(null,'',target.pathname+target.search+target.hash);
+  if(changed) {
+    restoreFilters();
+    load().then(openAnchor);
+  } else {
+    syncNavigation();
+    openAnchor();
+  }
+});
 
 async function loadStatus() {
   const badge = document.querySelector('#salud');
@@ -169,11 +212,12 @@ async function loadStatus() {
     const response = await fetch('/api/v1/salud');
     if(!response.ok) throw Error();
     const data = await response.json();
-    const labels = {'al-dia':'Fuentes al día',degradada:'Actualización parcial',atrasada:'Actualización atrasada',archivo:'Modo archivo',pendiente:'Esperando actualización'};
+    const labels = {'al-dia':'Actualización completa',degradada:'Actualización parcial',atrasada:'Actualización atrasada',archivo:'Modo archivo',pendiente:'Esperando actualización'};
     badge.textContent = labels[data.actualizacion]??'Estado de fuentes';
     const results = data.sources.map(source=>source.id+' · '+(source.ok?source.count+' detectadas':'sin respuesta'));
     if(data.lastAttempt) results.unshift('Última consulta '+dateTime.format(new Date(data.lastAttempt)));
     if(data.synthesis) results.push('Síntesis automáticas guardadas: '+data.synthesis.count);
+    if(data.synthesis?.errors) results.push('Consultas de síntesis fallidas: '+data.synthesis.errors);
     details.textContent = results.join(' / ') || 'Todavía no hay una consulta registrada.';
   } catch { badge.textContent = 'Estado no disponible'; }
 }
@@ -193,6 +237,6 @@ async function loadCatalog() {
 }
 
 restoreFilters();
-load();
+load().then(()=>{if(location.hash==='#simulador') openAnchor();});
 loadStatus();
 loadCatalog();
