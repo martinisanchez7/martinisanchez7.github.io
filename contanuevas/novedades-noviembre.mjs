@@ -63,10 +63,23 @@ export const ampliacionNoviembre = [
     references:[{label:'ATER · anuncio del 6 de noviembre',url:'https://www.ater.gob.ar/ater2/NoticiasV2.asp?ID=714'}]
   },
   {
+    id:'formosa-atp-prorroga-pagos-noviembre',category:'impositivo',jurisdictions:['formosa'],
+    date:'2026-11-04',title:'Formosa prorrogó pagos provinciales por la interrupción de servicios digitales',
+    summary:'La agencia del Gobierno provincial informó que la ATP trasladó al 10 de noviembre el pago de obligaciones con vencimiento del 1 al 6 de ese mes.',
+    source:'Agenfor · anuncio de la ATP',url:'https://agenfor.com.ar/2026/11/atp-prorrogan-los-plazos-de-los-vencimientos-para-el-pago-de-las-obligaciones-tributarias/',
+    mode:'editorial',
+    brief:{who:'Contribuyentes y responsables con pagos tributarios provinciales cuyo vencimiento original quedó comprendido en el anuncio.',
+      when:'La prórroga comunicada fue hasta el 10 de noviembre de 2026.',
+      limits:'La fuente enlazada es el anuncio de la agencia provincial. Para revisar una cuenta o los efectos sobre otros períodos, consultá el registro de la ATP.',
+      reviewedAt:'2026-11-11',scope:'Tributos provinciales · Formosa'},
+    references:[{label:'Administración Tributaria Provincial',url:'https://www.atpformosa.gob.ar/index.php'}]
+  },
+  {
     id:'jujuy-dpr-1774-cuotas-plan',category:'impositivo',jurisdictions:['jujuy'],
     date:'2026-11-06',title:'Jujuy fija el día 15 para las cuotas de nuevos planes de pago',
     summary:'La RG DPR 1774/2026 dispone que las cuotas de las nuevas adhesiones vencen el día 15 de cada mes y se cancelan por débito automático, incluida la primera.',
     source:'Boletín Oficial de Jujuy · RG DPR 1774/2026',url:'https://boletinoficial.jujuy.gob.ar/?p=437597',
+    alertUrls:['https://boletinoficial.jujuy.gob.ar/?p=437597'],
     mode:'editorial',importance:'alta',importanceReason:'Cambia el vencimiento y la modalidad de pago de nuevas adhesiones.',
     brief:{who:'Nuevas adhesiones al régimen permanente. Los planes vigentes conservan sus condiciones, salvo disposición expresa.',
       when:'Desde su publicación el 6 de noviembre de 2026. Si el día 15 es inhábil, vence el primer día hábil siguiente.',
@@ -78,6 +91,7 @@ export const ampliacionNoviembre = [
     date:'2026-10-28',title:'Jujuy reprograma vencimientos de agentes de Ingresos Brutos y Sellos',
     summary:'La RG 1772/2026 traslada al 13 de noviembre determinados vencimientos del 9 y 10 para declarar y pagar retenciones o percepciones de Ingresos Brutos y Sellos.',
     source:'Boletín Oficial de Jujuy · RG DPR 1772/2026',url:'https://boletinoficial.jujuy.gob.ar/?p=437303',
+    alertUrls:['https://boletinoficial.jujuy.gob.ar/?p=437303'],
     mode:'editorial',importance:'alta',importanceReason:'Reprograma vencimientos de noviembre.',
     brief:{who:'Agentes comprendidos en el apartado I del artículo 9 de la RG 1732/2025.',
       when:'13 de noviembre de 2026 para los vencimientos trasladados por el artículo 4.',

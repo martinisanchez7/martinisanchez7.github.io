@@ -5,7 +5,7 @@ import { actualizarCierre, ultimoCierre } from './cotizacion.mjs';
 import relevamientoInicial from './relevamiento-inicial.json' with { type:'json' };
 export { AvisosDiarios } from './avisos.mjs';
 
-const coverageVersion = 6;
+const coverageVersion = 7;
 const readCache = new WeakMap();
 const publicFiles = new Set(['/','/index.html','/estilo.css','/app.js','/simulador.js','/marca.svg','/icono.svg','/serif.woff2','/sans.woff2','/openapi.json',
   '/instalar.js','/criterios.js','/manifest.webmanifest','/service-worker.js','/app-192.png','/app-512.png']);

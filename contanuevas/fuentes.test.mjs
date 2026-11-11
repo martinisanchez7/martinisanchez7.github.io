@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseBoletin, parseBoletinCaba, parseFed, parseNews, refresh, sourceIds } from './fuentes.mjs';
+import { parseBoletin, parseBoletinCaba, parseBoletinJujuy, parseFed, parseNews, refresh, sourceIds } from './fuentes.mjs';
 import { fuentes } from './catalogo-fuentes.mjs';
 
 const notice = (id, date, authority, summary = '') => `<a class="avisos" href="/detalleAviso/primera/${id}/${date}"><div class="linea-aviso"><p class="item">${authority}</p><p><small>Resolución ${id}/2026</small><small>${summary}</small></p></div></a>`;
@@ -95,4 +95,14 @@ test('El índice provincial aplica el alcance explícito y la paginación del RS
   [source.id],{provincialPages:2});
   assert.deepEqual(new Set(result.items.flatMap(row=>row.jurisdictions)),new Set(['corrientes','tucuman']));
   assert.equal(result.status[0].latest,'2026-11-11');
+});
+
+test('Jujuy conserva el identificador de la publicación y selecciona resoluciones generales',()=>{
+  const source=fuentes.find(item=>item.id==='boletin-jujuy');
+  const item=(id,description)=>`<item><title>BOLETIN OFICIAL N° 133 – 06/11/2026</title><link>https://boletinoficial.jujuy.gob.ar/?p=${id}</link><description>${description}</description></item>`;
+  const entries=parseBoletinJujuy(rss(item(437597,'RESOLUCION GENERAL Nº 1774-DPR/2026')+
+    item(437478,'RESOLUCION Nº 1648-DPR/2026')),source);
+  assert.deepEqual(entries.map(entry=>[entry.url,entry.date,entry.jurisdictions]),[
+    ['https://boletinoficial.jujuy.gob.ar/?p=437597','2026-11-06',['jujuy']]
+  ]);
 });

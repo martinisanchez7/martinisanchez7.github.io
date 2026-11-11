@@ -130,6 +130,29 @@ function xmlField(item, key) {
   return item.match(new RegExp(`<${key}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${key}\\s*>`, 'i'))?.[1] ?? '';
 }
 
+export function parseBoletinJujuy(xml,source) {
+  checkRss(xml);
+  const items=[];
+  let examined=0,recognized=0;
+  for(const [,entry] of blocks(xml,/<(\/?)item\b([^<>]{0,512})>/gi,65_536)) {
+    if(++examined>80) break;
+    const dateText=plain(xmlField(entry,'title')).match(/(\d{2})\/(\d{2})\/(\d{4})$/);
+    const date=dateText?validDay(`${dateText[3]}-${dateText[2]}-${dateText[1]}`):'';
+    const detail=plain(xmlField(entry,'description'),550);
+    const rule=normalizar(detail).match(/^resolucion general n[º°o.]?\s*(\d+)-dpr\/(\d{4})\b/);
+    const url=URL.parse(plain(xmlField(entry,'link'),500));
+    if(!date || !url || url.origin!==new URL(source.url).origin || url.username || url.password
+      || url.pathname!=='/' || !/^\?p=\d+$/.test(url.search) || url.hash) continue;
+    recognized++;
+    if(!rule) continue;
+    items.push({id:'bojujuy-'+url.searchParams.get('p'),title:`Jujuy · RG DPR ${rule[1]}/${rule[2]}`,
+      summary:'Resolución general de Rentas publicada en el Boletín Oficial de Jujuy. El enlace lleva al texto original.',
+      date,category:'impositivo',url:url.href,source:source.name,mode:'automatico',jurisdictions:['jujuy']});
+  }
+  if(/<item\b/i.test(xml) && !recognized) throw Error('Ediciones de Jujuy no reconocidas');
+  return unique(items);
+}
+
 export function parseFed(xml) {
   checkRss(xml);
   const entries = blocks(xml, /<(\/?)item\b([^<>]{0,512})>/gi, 65_536);
@@ -235,7 +258,11 @@ export function parseNews(xml, source) {
   return unique(items);
 }
 
-for(const source of fuentes.filter(s=>s.feed)) sources.push({id:source.id,url:source.feed,accept:'application/rss+xml, application/xml, text/xml',type:/^(?:text\/xml|application\/(?:rss\+xml|xml))\b/i,parse:xml=>parseNews(xml,source)});
+for(const source of fuentes.filter(s=>s.feed)) {
+  const parser=source.id==='boletin-jujuy'?parseBoletinJujuy:parseNews;
+  sources.push({id:source.id,url:source.feed,accept:'application/rss+xml, application/xml, text/xml',
+    type:/^(?:text\/xml|application\/(?:rss\+xml|xml))\b/i,parse:xml=>parser(xml,source)});
+}
 export const sourceIds=sources.map(s=>s.id);
 
 export async function refresh(fetcher = fetch, ids, { now=Date.now(), lookback=0, provincialPages=1 }={}) {
