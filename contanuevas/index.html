@@ -1,9 +1,79 @@
-<!doctype html><html lang="es-AR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#0e3a35"><title>Contanuevas — Boletín profesional</title><link rel="icon" href="/icono.svg"><link rel="stylesheet" href="/estilo.css"><script src="/app.js" defer></script></head><body>
-<a class="saltar" href="#boletin">Saltar al boletín</a>
-<header class="top"><div class="wrap top-inner"><a href="/" class="publisher">MS Servicios Impositivos</a><nav aria-label="Principal"><a href="/?modo=editorial#boletin">Resúmenes</a><a href="/#boletin">Boletín</a><a href="#fuentes">Fuentes</a><a href="/api/v1/novedades">API JSON ↗</a><a href="/openapi.json">Contrato OpenAPI ↗</a></nav></div></header>
-<main class="wrap"><div class="mast"><img src="/marca.svg" alt="Contanuevas" width="620" height="120"><p>Impuestos, contabilidad y trabajo en Argentina. Una sección aparte para los hechos que mueven los mercados.</p><span id="salud">Consultando estado de fuentes…</span></div>
-<section id="boletin" aria-labelledby="boletin-title"><div class="section-head"><h1 id="boletin-title">Boletín</h1><p id="cantidad" role="status"></p></div>
-<form id="filtros"><div class="fields"><label>Buscar<input name="q" type="search" maxlength="100" placeholder="Ej.: ARCA, FOMC, RT 54"></label><label>Sección<select name="categoria"><option value="">Todas las secciones</option><option value="impositivo">Impositivo</option><option value="contable">Contable</option><option value="laboral">Laboral</option><option value="economia">Economía y finanzas</option><option value="internacional">Mercados internacionales</option></select></label><label>Contenido<select name="modo"><option value="">Todo</option><option value="editorial">Fichas revisadas</option><option value="automatico">Importaciones</option><option value="archivo">Archivo</option></select></label><label>Respaldo<select name="respaldo"><option value="">Todos</option><option value="oficial">Fuente oficial</option><option value="tecnico">Referencia técnica</option><option value="periodistico">Prensa</option></select></label><label>Prioridad<select name="importancia"><option value="">Todas</option><option value="alta">Alta</option><option value="seguimiento">Seguimiento</option></select></label><label>Desde<input name="desde" type="date"></label><label>Hasta<input name="hasta" type="date"></label><button>Filtrar</button></div></form>
-<div class="journal"><div><div id="entradas"></div><button id="mas" type="button" hidden>Ver más fichas</button></div><aside><h2>Qué cambia y qué hacer</h2><p>Los resúmenes revisados explican el cambio, a quién alcanza, desde cuándo y qué acción requiere. Detallan importes, bases, porcentajes y excepciones cuando corresponde.</p><p>La prioridad es orientativa. Una alerta de prensa no confirma una norma. Fuente oficial describe el origen del documento, no garantiza una interpretación revisada.</p><h2>Cómo leer el boletín</h2><p><strong>Ficha revisada.</strong> Explicación con fuentes oficiales verificadas para la fecha indicada.</p><p><strong>Archivo.</strong> Ejemplos históricos con enlaces a la fuente original. No indican vigencia actual.</p><p><strong>Importación.</strong> Aviso detectado automáticamente. Revisá el original antes de usarlo en una liquidación o publicarlo.</p><p><strong>Mercados.</strong> Hechos y contexto, sin recomendaciones de inversión.</p></aside></div></section>
-<section id="fuentes"><h2>Fuentes y cobertura</h2><p>Las normas se cotejan con el organismo emisor. La prensa sirve para encontrar temas y aportar contexto.</p><ul id="fuentes-lista"></ul></section></main>
-<footer class="wrap">Contanuevas · Prototipo editorial de MS Servicios Impositivos</footer></body></html>
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#122333">
+  <title>Contanuevas · Boletín normativo</title>
+  <link rel="icon" href="/icono.svg">
+  <link rel="stylesheet" href="/estilo.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="saltar" href="#boletin">Saltar al boletín</a>
+  <div class="shell">
+    <aside class="sidebar">
+      <a href="/" class="marca"><img src="/marca.svg" alt="Contanuevas" width="244" height="49"></a>
+      <nav aria-label="Principal">
+        <a href="/?modo=resumen#boletin">Resúmenes</a>
+        <a href="/?modo=automatico#boletin">Alertas de fuentes</a>
+        <a href="/?modo=archivo#boletin">Archivo</a>
+        <a href="#fuentes">Fuentes y estado</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <p>Para desarrolladores</p>
+        <a href="/api/v1/novedades">API JSON ↗</a>
+        <a href="/openapi.json">OpenAPI ↗</a>
+      </div>
+    </aside>
+    <main id="contenido">
+      <header class="mast">
+        <div>
+          <p class="edition">Boletín normativo argentino</p>
+          <h1>Contanuevas</h1>
+          <p>Impuestos, contabilidad y trabajo. Qué cambió, desde cuándo y a quién alcanza.</p>
+        </div>
+        <a class="estado" id="salud" href="#fuentes">Consultando fuentes…</a>
+      </header>
+      <section id="boletin" aria-labelledby="boletin-title">
+        <div class="section-head"><h2 id="boletin-title">Resúmenes</h2><p id="cantidad" role="status"></p></div>
+        <form id="filtros">
+          <div class="fields">
+            <label>Buscar<input name="q" type="search" maxlength="100" placeholder="Ganancias, casas particulares, RT 54"></label>
+            <label>Sección<select name="categoria">
+              <option value="">Todas las secciones</option><option value="impositivo">Impositivo</option>
+              <option value="contable">Contable</option><option value="laboral">Laboral</option>
+              <option value="economia">Economía y finanzas</option><option value="internacional">Mercados internacionales</option>
+            </select></label>
+            <button>Buscar</button>
+          </div>
+          <details class="advanced">
+            <summary>Más filtros</summary>
+            <div class="advanced-fields">
+              <label>Contenido<select name="modo">
+                <option value="resumen">Resúmenes</option><option value="todos">Todo el boletín</option>
+                <option value="editorial">Revisados</option><option value="sintesis">Síntesis automáticas</option>
+                <option value="automatico">Alertas</option><option value="archivo">Archivo</option>
+              </select></label>
+              <label>Respaldo<select name="respaldo"><option value="">Todos</option><option value="oficial">Fuente oficial</option><option value="tecnico">Referencia técnica</option><option value="periodistico">Prensa</option></select></label>
+              <label>Prioridad<select name="importancia"><option value="">Todas</option><option value="alta">Alta</option><option value="seguimiento">Seguimiento</option></select></label>
+              <label>Desde<input name="desde" type="date"></label>
+              <label>Hasta<input name="hasta" type="date"></label>
+            </div>
+          </details>
+        </form>
+        <div id="entradas"></div>
+        <button id="mas" type="button" hidden>Ver más fichas</button>
+      </section>
+      <section id="fuentes" aria-labelledby="fuentes-titulo">
+        <h2 id="fuentes-titulo">Fuentes y estado</h2>
+        <p id="estado-detalle"></p>
+        <p>Las fichas revisadas incluyen cotejo editorial. Las síntesis automáticas extraen datos de textos oficiales y muestran la fecha de consulta.</p>
+        <details><summary>Ver catálogo de fuentes</summary><ul id="fuentes-lista"></ul></details>
+      </section>
+      <footer>Contanuevas · MS Servicios Impositivos</footer>
+    </main>
+  </div>
+</body>
+</html>

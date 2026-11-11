@@ -18,7 +18,7 @@ function decode(value) {
   });
 }
 
-function plain(value, limit = 320) {
+export function plain(value, limit = 320) {
   return decode(value.replace(/^\s*<!\[CDATA\[|\]\]>\s*$/g, ''))
     .replace(/<[^<>]*>/g, ' ').replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g, ' ')
     .replace(/\s+/g, ' ').trim().slice(0, limit);
@@ -34,6 +34,7 @@ function classify(title, summary) {
   const text = `${title} ${summary}`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
   if (/\b(?:normas? (?:profesionales )?contables?|normas? (?:internacionales? )?de informacion financiera|estados contables|estados financieros|auditoria contable|resolucion tecnica(?: n[o°.]?)? \d+)\b/.test(text)) return 'contable';
   if (/\b(?:agencia de recaudacion y control aduanero|administracion federal de ingresos publicos|monotributo|impuesto a las ganancias|impuesto al valor agregado|bienes personales|obligaciones tributarias|regimen de retencion|procedimiento tributario)\b/.test(text)) return 'impositivo';
+  if (/administracion nacional de la seguridad social/.test(text) && /\b(haberes?|bases imponibles?|resolucion)\b/.test(text)) return 'laboral';
   if (/\b(?:convenios? colectivos? de trabajo|contrato de trabajo|acuerdos? salariales?|riesgos del trabajo|salario minimo|jornada laboral|relaciones laborales|negociacion colectiva|comision nacional de trabajo en casas particulares|casas particulares|reforma laboral|despidos?|indemnizaciones?|paritarias|sueldos?|salarios?)\b/.test(text)) return 'laboral';
   return '';
 }
@@ -110,7 +111,7 @@ export function parseFed(xml) {
   return unique(items);
 }
 
-async function download(fetcher, source) {
+export async function download(fetcher, source) {
   const signal = AbortSignal.timeout(TIMEOUT_MS);
   const response = await fetcher(source.url, { signal, redirect: 'manual', headers: { accept: source.accept, 'user-agent': 'Contanuevas/0.1 (lector de fuentes publicas)' } });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);

@@ -6,10 +6,12 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createApp } from './server.mjs';
 
+const compile=async()=>({summaries:[],status:{attempted:0,errors:0,count:0}});
+
 test('API, interfaz, filtros, controles y continuidad ante fallo',async t=>{
   let call=0;
   const item={id:'fed-test',title:'Ejemplo de prueba',summary:'Contenido de prueba',category:'internacional',date:'2026-11-09',source:'Fed',url:'https://www.federalreserve.gov/newsevents/pressreleases/test.htm',mode:'automatico'};
-  const {server,refresh}=createApp({live:true,update:async()=>{
+  const {server,refresh}=createApp({live:true,compile,update:async()=>{
     if(++call>1)throw Error('Servicio no disponible');
     return {items:[item,item,{...item,id:'dominio-no-permitido',url:'https://example.org/'},{...item,id:'fecha-no-permitida',date:'2026-02-30'}],status:[{id:'reserva-federal',ok:true,count:2}]};
   }});
@@ -56,10 +58,10 @@ test('recupera fichas importadas tras reiniciar con fuentes caídas',async t=>{
   t.after(()=>rm(directory,{recursive:true,force:true}));
   const cacheFile=join(directory,'copia.json');
   const item={id:'fed-cache',title:'Ficha de prueba',summary:'Texto de prueba',category:'internacional',date:'2026-11-09',source:'Fed',url:'https://www.federalreserve.gov/newsevents/pressreleases/test.htm',mode:'automatico'};
-  const original=createApp({live:true,cacheFile,update:async()=>({items:[item],status:[{id:'fed',ok:true,count:1}]})});
+  const original=createApp({live:true,compile,cacheFile,update:async()=>({items:[item],status:[{id:'fed',ok:true,count:1}]})});
   await original.refresh();
 
-  const restarted=createApp({live:true,cacheFile,update:async()=>({items:[],status:[{id:'fed',ok:false,count:0}]})});
+  const restarted=createApp({live:true,compile,cacheFile,update:async()=>({items:[],status:[{id:'fed',ok:false,count:0}]})});
   await restarted.refresh();
   await new Promise(ok=>restarted.server.listen(0,'127.0.0.1',ok));
   t.after(()=>new Promise(ok=>restarted.server.close(ok)));

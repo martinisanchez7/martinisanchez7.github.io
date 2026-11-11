@@ -41,7 +41,7 @@ export function valorar(item) {
     ...item,
     sourceId:source?.id??null,
     sourceTier:source?.tier??'sin-clasificar',
-    verification:item.mode==='editorial'?'revisada':item.mode==='archivo'?'historica':'pendiente',
+    verification:item.mode==='editorial'?'revisada':item.mode==='sintesis'?'extraccion':item.mode==='archivo'?'historica':'pendiente',
     importance:reviewedPriority?item.importance:high?'alta':'seguimiento',
     importanceReason:reviewedPriority?item.importanceReason:high?'Tema que puede modificar obligaciones, importes o plazos.':'Seguimiento temático.',
     importanceMethod:reviewedPriority?'revision-editorial':'reglas-tematicas-v1'

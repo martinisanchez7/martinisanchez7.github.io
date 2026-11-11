@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Contanuevas",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Boletín con alertas pendientes de cotejo y resúmenes normativos revisados. El respaldo de la fuente y la prioridad temática se informan por separado."
   },
   "servers": [
@@ -48,7 +48,9 @@
               "enum": [
                 "archivo",
                 "automatico",
-                "editorial"
+                "editorial",
+                "sintesis",
+                "resumen"
               ]
             }
           },
@@ -301,7 +303,8 @@
             "enum": [
               "archivo",
               "automatico",
-              "editorial"
+              "editorial",
+              "sintesis"
             ]
           },
           "sourceId": {
@@ -349,7 +352,6 @@
               "when",
               "action",
               "limits",
-              "reviewedAt",
               "scope"
             ],
             "properties": {
@@ -373,6 +375,11 @@
               },
               "scope": {
                 "type": "string"
+              },
+              "checkedAt": {
+                "type": "string",
+                "format": "date",
+                "description": "Fecha de extracción automática del texto oficial."
               }
             }
           },
@@ -419,6 +426,10 @@
               "type": "string",
               "format": "uri"
             }
+          },
+          "summaryId": {
+            "type": "string",
+            "description": "ID de la síntesis automática vinculada al aviso oficial."
           }
         }
       }

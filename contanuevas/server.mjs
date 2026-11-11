@@ -3,11 +3,13 @@ import { readFile, writeFile, rename, unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { DAY, RETRY, security, mergeItems, serveApi, updateStatus } from './api.mjs';
+import { compileSummaries } from './sintesis.mjs';
 
 const files = new Map([['/','index.html'],['/estilo.css','estilo.css'],['/app.js','app.js'],['/marca.svg','marca.svg'],['/icono.svg','icono.svg'],['/serif.woff2','serif.woff2'],['/sans.woff2','sans.woff2'],['/openapi.json','openapi.json']]);
 const types = {html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',svg:'image/svg+xml',woff2:'font/woff2',json:'application/json; charset=utf-8'};
-export function createApp({live=false, update, cacheFile}={}) {
+export function createApp({live=false, update, cacheFile, compile=compileSummaries}={}) {
   let current = [];
+  let summaries = [];
   let health = {product:'contanuevas',mode:live?'conectado':'archivo',lastAttempt:null,sources:[]};
   let lastCompleted = 0;
   if(cacheFile) health.cache = 'sin-copia';
@@ -30,6 +32,9 @@ export function createApp({live=false, update, cacheFile}={}) {
       const next = await run();
       health.sources = next.status.map(({id,ok,count}) => ({id,ok,count}));
       current = mergeItems(current,next.items);
+      const synthesis = await compile(current,summaries);
+      summaries = synthesis.summaries;
+      health.synthesis = synthesis.status;
       if(cacheFile && health.sources.some(source=>source.ok)) {
         const temporary = cacheFile+'.'+randomUUID()+'.tmp';
         try {
@@ -56,7 +61,7 @@ export function createApp({live=false, update, cacheFile}={}) {
       if(!['GET','HEAD'].includes(req.method)) return send(405,{error:'Método no permitido'},undefined,{Allow:'GET, HEAD'});
       if(!req.url?.startsWith('/') || req.url.startsWith('//') || req.url.length>2048) return send(400,{error:'Ruta inválida'});
       const url=new URL(req.url,'http://localhost');
-      const result=serveApi(url,send,health,current,lastCompleted);
+      const result=serveApi(url,send,health,current,lastCompleted,summaries);
       if(url.pathname.startsWith('/api/')) return result;
       const {pathname}=url;
       const file=files.get(pathname);
