@@ -21,11 +21,13 @@ test('API, interfaz, filtros, controles y continuidad ante fallo',async t=>{
   const home=await req('/');assert.equal(home.status,200);assert.match(await home.text(),/Contanuevas/);
   assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/);
   for(const p of ['/estilo.css','/app.js','/marca.svg','/icono.svg','/serif.woff2','/sans.woff2'])assert.equal((await req(p)).status,200,p);
-  assert.equal((await json('/api/v1/novedades')).total,6);
-  const editorial=await json('/api/v1/novedades?modo=editorial&categoria=laboral');
+  assert.equal((await json('/api/v1/novedades')).total,9);
+  const editorial=await json('/api/v1/novedades?modo=editorial&categoria=laboral&q=casas-particulares-noviembre-2026');
   assert.equal(editorial.total,1);
   assert.equal(editorial.items[0].id,'casas-particulares-noviembre-2026');
-  assert.equal(editorial.items[0].references.length,2);
+  assert.ok(editorial.items[0].references.some(ref=>ref.label.includes('Anexo IV')));
+  assert.equal(editorial.items[0].tables[0].rows.length,5);
+  assert.equal(editorial.items[0].tables[1].rows.length,5);
   assert.equal((await json('/api/v1/novedades?categoria=contable')).total,1);
   assert.equal((await json('/api/v1/novedades?q=MODERNIZACION')).items[0].id,'ley-27742');
   assert.equal((await json('/api/v1/novedades?limite=1&desde_fila=1')).items.length,1);

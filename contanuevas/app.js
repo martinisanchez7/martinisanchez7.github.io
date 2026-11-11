@@ -8,6 +8,29 @@ function restoreFilters(){
 }
 const el=(tag,text,cls)=>{const node=document.createElement(tag);node.textContent=text;if(cls)node.className=cls;return node;};
 function link(url,label){const a=el('a',label);const target=URL.parse(url);if(target?.protocol==='https:'){a.href=target.href;a.target='_blank';a.rel='noopener noreferrer';}return a;}
+function tablaDeFicha({caption,columns,rows}) {
+  const container=el('div','','tabla-ficha');
+  container.tabIndex=0;
+  container.setAttribute('role','region');
+  container.setAttribute('aria-label',caption);
+  const table=document.createElement('table');
+  table.append(el('caption',caption));
+  const header=table.createTHead().insertRow();
+  for(const column of columns) {
+    const cell=el('th',column);
+    cell.scope='col';
+    header.append(cell);
+  }
+  const body=table.createTBody();
+  for(const values of rows) {
+    const row=body.insertRow();
+    const label=el('th',values[0]);
+    label.scope='row';
+    row.append(label,...values.slice(1).map(value=>el('td',value)));
+  }
+  container.append(table);
+  return container;
+}
 async function cargar(append=false){
   controller?.abort();const request=new AbortController();controller=request;
   if(!append){offset=0;list.replaceChildren();applied=new URLSearchParams();for(const [key,value] of new FormData(form))if(value.trim())applied.set(key,value.trim());}more.hidden=true;
@@ -22,8 +45,17 @@ async function cargar(append=false){
       const a=el('article','');const meta=el('div','','meta');
       meta.append(el('b',labels[item.category]),document.createTextNode(` · ${item.datePrecision==='month'?item.date.slice(0,7):item.date} · ${item.mode==='editorial'?'Ficha revisada':item.mode==='archivo'?'Archivo histórico':'Importación sin revisión editorial'}`));
       a.append(meta,el('h3',item.title));
-      a.append(el('p',`${({oficial:'Fuente oficial',tecnico:'Referencia técnica',periodistico:'Prensa'})[item.sourceTier]??'Respaldo sin clasificar'} · ${item.importance==='alta'?'Prioridad alta':'Seguimiento'} · ${item.verification==='pendiente'?'Pendiente de cotejo documental':item.verification==='historica'?'Documento histórico':'Resumen revisado'}`,'respaldo'));
-      if(item.brief){for(const [key,label] of Object.entries({whatChanged:'Qué cambió',who:'A quién alcanza',when:'Desde cuándo',action:'Qué hacer',limits:'Qué revisar'})){if(item.brief[key]){const p=el('p','');p.append(el('strong',label+': '),document.createTextNode(item.brief[key]));a.append(p);}}a.append(el('p',`Revisión: ${item.brief.reviewedAt} · ${item.brief.scope}`));}else a.append(el('p',item.summary));
+      const reviewLabel=item.reviewedId?'Resumen disponible':item.verification==='pendiente'?'Pendiente de cotejo documental':item.verification==='historica'?'Documento histórico':'Resumen revisado';
+      a.append(el('p',`${({oficial:'Fuente oficial',tecnico:'Referencia técnica',periodistico:'Prensa'})[item.sourceTier]??'Respaldo sin clasificar'} · ${item.importance==='alta'?'Prioridad alta':'Seguimiento'} · ${reviewLabel}`,'respaldo'));
+      if(item.brief){for(const [key,label] of Object.entries({whatChanged:'Qué cambió',who:'A quién alcanza',when:'Desde cuándo',action:'Qué hacer',limits:'Qué revisar'})){if(item.brief[key]){const p=el('p','');p.append(el('strong',label+': '),document.createTextNode(item.brief[key]));a.append(p);}}a.append(el('p',`Revisión: ${item.brief.reviewedAt} · ${item.brief.scope}`));}else if(!item.reviewedId) a.append(el('p',item.summary));
+      for(const table of item.tables??[]) a.append(tablaDeFicha(table));
+      if(item.reviewedId) {
+        const review=el('a','Leer el resumen verificado');
+        review.href='/?'+new URLSearchParams({modo:'editorial',q:item.reviewedId})+'#boletin';
+        const paragraph=el('p','');
+        paragraph.append(review);
+        a.append(paragraph);
+      }
       a.append(link(item.url,`${item.source} ↗`));for(const ref of item.references??[]) { const p=el("p","");p.append(link(ref.url,ref.label+" ↗"));a.append(p); } list.append(a);
     }
     offset+=data.items.length;count.textContent=`${data.total} ${data.total===1?'ficha':'fichas'}`;more.hidden=offset>=data.total;

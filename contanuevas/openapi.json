@@ -375,6 +375,50 @@
                 "type": "string"
               }
             }
+          },
+          "tables": {
+            "type": "array",
+            "description": "Cuadros cotejados con el texto o anexo original. Cada fila sigue el orden de las columnas.",
+            "items": {
+              "type": "object",
+              "required": [
+                "caption",
+                "columns",
+                "rows"
+              ],
+              "properties": {
+                "caption": {
+                  "type": "string"
+                },
+                "columns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "reviewedId": {
+            "type": "string",
+            "description": "ID de la ficha editorial vinculada a esta alerta."
+          },
+          "alertUrls": {
+            "type": "array",
+            "description": "Enlaces de alertas vinculadas a este resumen.",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
           }
         }
       }

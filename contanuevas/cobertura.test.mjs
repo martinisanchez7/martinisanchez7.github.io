@@ -20,9 +20,22 @@ test('Fallos de medios no borran las entradas válidas de otras fuentes',async()
 });
 test('API: filtros combinados y resumen estructurado',()=>{
  const get=path=>serveApi(new URL('https://local.invalid'+path),(status,body)=>({status,body}),{mode:'archivo'},[],0);
- const ficha=get('/api/v1/novedades?modo=editorial&importancia=alta&respaldo=oficial');
+ const ficha=get('/api/v1/novedades?modo=editorial&importancia=alta&respaldo=oficial&q=casas-particulares-noviembre-2026');
  assert.equal(ficha.status,200);assert.equal(ficha.body.total,1);assert.ok(ficha.body.items[0].brief.whatChanged);
  assert.equal(get('/api/v1/novedades?respaldo=garantizado').status,400);
  assert.equal(get('/api/v1/novedades?fuente=desconocida').status,400);
  const catalog=get('/api/v1/fuentes').body.items;assert.equal(catalog.length,24);assert.equal(catalog.find(s=>s.id==='errepar').connection,'manual');
+});
+
+test('Una alerta cotejada enlaza su ficha editorial sin cambiar su respaldo',()=>{
+  const source=fuentes.find(source=>source.id==='ambito-fiscal');
+  const url='https://www.ambito.com/novedades-fiscales/arba-deuda-deuda-y-plan-plan-como-gozar-los-mayores-beneficios-las-facilidades-pago-n6343333';
+  const items=parseNews(xml(url),source);
+  const get=path=>serveApi(new URL('https://local.invalid'+path),(status,body)=>({status,body}),{mode:'archivo'},items,0);
+  const alert=get('/api/v1/novedades?modo=automatico&respaldo=periodistico').body.items[0];
+  assert.equal(alert.reviewedId,'arba-23-planes-2026');
+  assert.equal(alert.sourceTier,'periodistico');
+  const review=get('/api/v1/novedades?modo=editorial&q='+alert.reviewedId).body.items[0];
+  assert.equal(review.verification,'revisada');
+  assert.deepEqual(review.tables[0].rows.map(row=>row[1]),['40%','35%','30%','30%']);
 });

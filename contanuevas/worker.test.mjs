@@ -25,5 +25,5 @@ test('Worker conserva fichas, reintenta fallos y mantiene los filtros',async()=>
   await actualizar(kv,now,recovered);
   assert.equal(calls,1);
   assert.equal((await request('/api/v1/actualizacion')).status,200);
-  assert.equal((await (await request('/api/v1/novedades?categoria=laboral&modo=editorial')).json()).total,1);
+  assert.equal((await (await request('/api/v1/novedades?categoria=laboral&modo=editorial&q=casas-particulares-noviembre-2026')).json()).total,1);
 });

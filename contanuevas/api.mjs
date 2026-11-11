@@ -8,6 +8,9 @@ const date = x => typeof x==='string' && /^\d{4}-\d{2}-\d{2}$/.test(x) && new Da
 export const DAY=24*60*60*1000;
 export const RETRY=60*60*1000;
 const order=(a,b)=>b.date.localeCompare(a.date)||a.id.localeCompare(b.id);
+const resumenPorAlerta = new Map(
+  editoriales.flatMap(item => (item.alertUrls ?? []).map(url => [url, item.id]))
+);
 export function updateStatus(health,lastCompleted) {
   if(health.mode!=='conectado') return 'archivo';
   if(health.cache==='no-disponible') return 'degradada';
@@ -28,7 +31,11 @@ export function mergeItems(previous, incoming) {
 
 export function serveApi({pathname,searchParams:p},send,health,items,lastCompleted) {
   if(!pathname.startsWith('/api/')) return undefined;
-  const all=[...editoriales,...archivo,...items].map(valorar).sort(order);
+  const all=[...editoriales,...archivo,...items].map(item => {
+    const ficha=valorar(item);
+    const reviewedId=item.mode==='automatico' && resumenPorAlerta.get(item.url);
+    return reviewedId ? {...ficha,reviewedId} : ficha;
+  }).sort(order);
   const actualizacion=updateStatus(health,lastCompleted);
   if(pathname==='/api/v1/salud') return send(200,{...health,entries:all.length,actualizacion});
   if(pathname==='/api/v1/actualizacion') {
@@ -47,7 +54,7 @@ export function serveApi({pathname,searchParams:p},send,health,items,lastComplet
     const respaldo=p.get('respaldo'),importancia=p.get('importancia'),fuente=p.get('fuente');
     const limit=p.get('limite')??'20',offset=p.get('desde_fila')??'0';
     if([...p.keys()].some(k=>!['categoria','q','modo','desde','hasta','limite','desde_fila','respaldo','importancia','fuente'].includes(k)||p.getAll(k).length>1) || (respaldo!==null&&!['oficial','tecnico','periodistico','sin-clasificar'].includes(respaldo)) || (importancia!==null&&!['alta','seguimiento'].includes(importancia)) || (fuente!==null&&!fuentes.some(s=>s.id===fuente)) || (category!==null&&!categorias.includes(category)) || (mode!==null&&!['archivo','automatico','editorial'].includes(mode)) || q.length>100 || (desde!==null&&!date(desde)) || (hasta!==null&&!date(hasta)) || (desde&&hasta&&desde>hasta) || !/^\d{1,3}$/.test(limit)||+limit<1||+limit>100||!/^\d{1,4}$/.test(offset)) return send(400,{error:'Filtros inválidos'});
-    const matches=all.filter(x=>(!respaldo||x.sourceTier===respaldo)&&(!importancia||x.importance===importancia)&&(!fuente||x.sourceId===fuente)&&(!category||x.category===category)&&(!mode||x.mode===mode)&&(!desde||x.date>=desde)&&(!hasta||x.date<=hasta)&&(!q||norm(`${x.title} ${x.summary} ${x.source}`).includes(norm(q))));
+    const matches=all.filter(x=>(!respaldo||x.sourceTier===respaldo)&&(!importancia||x.importance===importancia)&&(!fuente||x.sourceId===fuente)&&(!category||x.category===category)&&(!mode||x.mode===mode)&&(!desde||x.date>=desde)&&(!hasta||x.date<=hasta)&&(!q||norm(`${x.id} ${x.title} ${x.summary} ${x.source}`).includes(norm(q))));
     return send(200,{total:matches.length,limite:+limit,desde_fila:+offset,items:matches.slice(+offset,+offset+ +limit)});
   }
   return send(404,{error:'Ruta no encontrada'});

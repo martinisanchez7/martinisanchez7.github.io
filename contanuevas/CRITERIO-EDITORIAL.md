@@ -12,7 +12,7 @@ Cada resumen revisado debe indicar:
 - Texto oficial, anexos, rectificaciones, normas modificadas y fecha de revisión.
 - Datos no confirmados o puntos que requieren una liquidación individual.
 
-No se publicará un resumen como revisado a partir de un titular, de un extracto de buscador o de una nota sin cotejar el documento. No se completan vacíos por inferencia. Proyecto, anuncio, norma publicada y opinión son estados distintos. La ficha de casas particulares es una muestra estructurada: todavía no contiene la escala completa.
+No se publicará un resumen como revisado a partir de un titular, de un extracto de buscador o de una nota sin cotejar el documento. No se completan vacíos por inferencia. Proyecto, anuncio, norma publicada y opinión son estados distintos. La ficha de casas particulares incluye las escalas de noviembre y diciembre y los tramos de la suma de agosto.
 
 ## Respaldo y prioridad
 
@@ -30,4 +30,4 @@ Alta / seguimiento: prioridad preliminar por tema, con motivo visible en la API.
 
 Sólo se importan metadatos y enlaces de prensa; no notas completas, fotografías ni contenido de suscripción. Los conectores RSS validan origen, tamaño, fecha y formato. La clasificación automática puede omitir o clasificar mal una novedad. No se promete cobertura exhaustiva ni confirmación cruzada automática.
 
-Pendientes: lectura del texto oficial y anexos para cada nueva ficha; conexiones verificadas de ARCA, FACPCE y fuentes provinciales; comprobación en Cloudflare de los nuevos canales; revisión de la primera edición antes de anunciar el lanzamiento.
+Las fichas revisadas pueden vincular las alertas que les dieron origen mediante la URL exacta. La vinculación permite pasar del titular al resumen y conserva el origen periodístico de la alerta. La revisión se repite para las novedades nuevas.

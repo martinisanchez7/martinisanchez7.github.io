@@ -36,5 +36,14 @@ export function valorar(item) {
   const source=fuenteDe(item);
   const text=`${item.title} ${item.mode==='automatico'?'':item.summary}`.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase();
   const high=/\b(vencimientos?|prorroga|escalas? salariales?|salario minimo|casas particulares|monotributo|alicuotas?|retenciones?|moratoria|reforma laboral)\b/.test(text);
-  return {...item,sourceId:source?.id??null,sourceTier:source?.tier??'sin-clasificar',verification:item.mode==='editorial'?'revisada':item.mode==='archivo'?'historica':'pendiente',importance:high?'alta':'seguimiento',importanceReason:high?'Tema que puede modificar obligaciones, importes o plazos. Prioridad orientativa; falta evaluar cada caso.':'Seguimiento temático. El alcance concreto requiere lectura del documento.',importanceMethod:'reglas-tematicas-v1'};
+  const reviewedPriority=item.mode==='editorial' && item.importance && item.importanceReason;
+  return {
+    ...item,
+    sourceId:source?.id??null,
+    sourceTier:source?.tier??'sin-clasificar',
+    verification:item.mode==='editorial'?'revisada':item.mode==='archivo'?'historica':'pendiente',
+    importance:reviewedPriority?item.importance:high?'alta':'seguimiento',
+    importanceReason:reviewedPriority?item.importanceReason:high?'Tema que puede modificar obligaciones, importes o plazos.':'Seguimiento temático.',
+    importanceMethod:reviewedPriority?'revision-editorial':'reglas-tematicas-v1'
+  };
 }
